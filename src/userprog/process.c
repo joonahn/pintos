@@ -56,15 +56,48 @@ start_process (void *file_name_)
   char *file_name = file_name_;
   struct intr_frame if_;
   bool success;
+  struct thread *cur = thread_current();
+  char *str, *token, *save_ptr;
+  int arg_count = 0;
+  int arg_stack_size = 0;
+  int index;
+  int address_walk;
+  char * arg_ptr[64];
+  char * next_esp;
 
   printf("hello start process %s\n", file_name_);
+
+
+  //Copy filename to string variable
+  printf("copy filename : %s", file_name_);
+  str = (char *)malloc(strlen(file_name_) + 1);
+  printf("copy filename : %s", file_name_);
+  strlcpy(str, file_name_, strlen(file_name_) + 1);
+  printf("copy filename complete\n");
+  printf("copy filename : %s", file_name_);
+  printf("str : %s, file_name_ : %s", str, file_name_);
+
+  //Parse argument
+  for (token = strtok_r (str, " ", &save_ptr); token != NULL;
+      token = strtok_r (NULL, " ", &save_ptr))
+  {
+    arg_ptr[arg_count] = malloc(strlen(token) + 1);
+    strlcpy(arg_ptr[arg_count], token, strlen(token) + 1);
+    printf("arg_ptr: %s\n", arg_ptr[arg_count]);
+
+    arg_stack_size += (strlen(token) + 1);
+    printf("token : %s, length: %d", token, strlen(token) + 1);
+    arg_count++;
+  }
+  printf("parse argument complete, with arg_stack_size: %d\n", arg_stack_size);
+
 
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-  success = load (file_name, &if_.eip, &if_.esp);
+  success = load (arg_ptr[0], &if_.eip, &if_.esp);
 
   printf("load finished %s\n", file_name_);
 
@@ -77,49 +110,20 @@ start_process (void *file_name_)
   else
   {
     printf("stack creation complete\n");
-    struct thread *cur = thread_current ();
-    char *str, *token, *save_ptr;
-    int arg_count = 0;
-    int arg_stack_size = 0;
-    int index;
-    char * arg_ptr[64];
-    char * next_esp;
-
-    //Copy filename to string variable
-    printf("copy filename : %s", file_name_);
-    str = (char *)malloc(strlen(file_name_) + 1);
-    printf("copy filename : %s", file_name_);
-    strlcpy(str, file_name_, strlen(file_name_) + 1);
-    printf("copy filename complete\n");
-    printf("copy filename : %s", file_name_);
-    printf("str : %s, file_name_ : %s", str, file_name_);
-
-    //Parse argument
-    for (token = strtok_r (str, " ", &save_ptr); token != NULL;
-        token = strtok_r (NULL, " ", &save_ptr))
-    {
-      arg_ptr[arg_count] = malloc(strlen(token) + 1);
-      strlcpy(arg_ptr[arg_count], token, strlen(token) + 1);
-      printf("arg_ptr: %s\n", arg_ptr[arg_count]);
-
-      arg_stack_size += (strlen(token) + 1);
-      printf("token : %s, length: %d", token, strlen(token) + 1);
-      arg_count++;
-    }
-    printf("parse argument complete, with arg_stack_size: %d\n", arg_stack_size);
-
     //Enlarge stack
     if_.esp -= arg_stack_size;
     next_esp = (char *)pagedir_get_page(cur->pagedir, if_.esp);
     printf("next_esp: %p, esp: %p\n", next_esp, if_.esp);
     printf("enlarge stack complete\n");
 
+    address_walk = 0;
     //Fill stack
     for(index = 0;index<arg_count;index++)
     {
       strlcpy(next_esp, arg_ptr[index], strlen(arg_ptr[index])+1);
       free(arg_ptr[index]);
-      arg_ptr[index] = if_.esp + index * 4;
+      arg_ptr[index] = if_.esp + address_walk;
+      address_walk += strlen(arg_ptr[index])+1;
       next_esp += (strlen(arg_ptr[index]) + 1);
       printf("%d index strcpy complete\n", index);
       printf("data copied to stack %s", arg_ptr[index]);
