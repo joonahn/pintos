@@ -16,6 +16,7 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f UNUSED) 
 {
+ 
   struct thread *cur = thread_current ();
   int syscall_number = *((int *)pagedir_get_page(cur->pagedir, f->esp));
   printf ("system call!\n");
@@ -30,7 +31,8 @@ syscall_handler (struct intr_frame *f UNUSED)
   	  unsigned length;
 
   	  //extract data from stack
-  	  hex_dump((((int)f->esp)), /*(char *)pagedir_get_page(cur->pagedir, (((int)f->esp)))*/f->esp, 64, true);
+      //hex_dump((((int)f->esp)), (char*)pagedir_get_page(cur->pagedir, (((int)f->esp))),64,true);
+  	  hex_dump((((int)f->esp)), f->esp, 64, true);
 
   	  fd = *((int *)pagedir_get_page(cur->pagedir, (f->esp) + 4));
   	  buffer = (char *)pagedir_get_page(cur->pagedir, (f->esp) + 8);
@@ -43,9 +45,10 @@ syscall_handler (struct intr_frame *f UNUSED)
   	}
   	case SYS_EXIT:
   	{
+      hex_dump((((int)f->esp)),f->esp,64,true);
   	  printf("exit syscall!");
-	  process_exit();
       thread_exit ();
+      printf("thread exit");
   	}
   }
   //process_exit();

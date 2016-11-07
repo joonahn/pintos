@@ -292,15 +292,19 @@ thread_exit (void)
 
 #ifdef USERPROG
   process_exit ();
+  printf("thread was user process\n");
 #endif
 
   /* Remove thread from all threads list, set our status to dying,
      and schedule another process.  That process will destroy us
      when it calls thread_schedule_tail(). */
   intr_disable ();
+  printf("intr_disable");
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
+  printf("thread status");
   schedule ();
+  printf("schedule");
   NOT_REACHED ();
 }
 
