@@ -4,6 +4,7 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "userprog/process.h"
+#include "userprog/pagedir.h"
 
 static void syscall_handler (struct intr_frame *);
 
@@ -29,30 +30,25 @@ syscall_handler (struct intr_frame *f UNUSED)
 
       //extract data from the stack
       fd = *((int*)pagedir_get_page(cur->pagedir, (f->esp) + 4));
-      buffer = *((int*)pagedir_get_page(cur->pagedir, (f->esp) + 8));
+      buffer =(char*)(*((int*)pagedir_get_page(cur->pagedir, (f->esp) + 8)));
       length = *((unsigned *)pagedir_get_page(cur->pagedir, (f->esp) + 12));
       if(fd==1)
       {
         putbuf(buffer, length);
       }
       else
-        return -1;
+        return;
   	  break;
   	}
   	case SYS_EXIT:
   	{
-      hex_dump((((int)f->esp)),f->esp,64,true);
-      printf ("%s: exit(%d)\n", "args-none", *((int *)((f->esp)+4)));
+      int stat=*((int*)pagedir_get_page(cur->pagedir, (f->esp) + 4));
+      cur->exitstat = stat;
+//      hex_dump((((int)f->esp)),f->esp,64,true);
+      printf ("%s: exit(%d)\n", cur->process_name, stat);
       thread_exit ();
   	}
   }
   //process_exit();
   //thread_exit ();
-}
-
-void
-exit (int status)
-{
-  process_exit();
-
 }

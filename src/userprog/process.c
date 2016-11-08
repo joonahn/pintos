@@ -17,6 +17,7 @@
 #include "threads/palloc.h"
 #include "threads/malloc.h"
 #include "threads/thread.h"
+#include "threads/synch.h"
 #include "threads/vaddr.h"
 
 static thread_func start_process NO_RETURN;
@@ -31,8 +32,7 @@ process_execute (const char *file_name)
 {
   char *fn_copy;
   tid_t tid;
-
-  printf("hello golden");
+  struct thread* cur = thread_current();
 
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
@@ -43,8 +43,17 @@ process_execute (const char *file_name)
 
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  struct thread* t = get_thread(tid);
+  sema_down(&t->waitsema);
+  if(!t -> loadstat)
+    return -1;
   if (tid == TID_ERROR)
-    palloc_free_page (fn_copy); 
+    palloc_free_page (fn_copy);
+  else
+  {
+ //   list_push_front(&cur->child_list, &cur->childelem);
+    t->parent = cur;
+  }
   return tid;
 }
 
@@ -65,17 +74,11 @@ start_process (void *file_name_)
   char * arg_ptr[64];
   char * next_esp;
 
-  printf("hello start process %s\n", file_name_);
 
 
   //Copy filename to string variable
-  printf("copy filename : %s", file_name_);
   str = (char *)malloc(strlen(file_name_) + 1);
-  printf("copy filename : %s", file_name_);
   strlcpy(str, file_name_, strlen(file_name_) + 1);
-  printf("copy filename complete\n");
-  printf("copy filename : %s", file_name_);
-  printf("str : %s, file_name_ : %s", str, file_name_);
 
   //Parse argument
   for (token = strtok_r (str, " ", &save_ptr); token != NULL;
@@ -83,13 +86,10 @@ start_process (void *file_name_)
   {
     arg_ptr[arg_count] = malloc(strlen(token) + 1);
     strlcpy(arg_ptr[arg_count], token, strlen(token) + 1);
-    printf("arg_ptr: %s\n", arg_ptr[arg_count]);
 
     arg_stack_size += (strlen(token) + 1);
-    printf("token : %s, length: %d", token, strlen(token) + 1);
     arg_count++;
   }
-  printf("parse argument complete, with arg_stack_size: %d\n", arg_stack_size);
 
 
   /* Initialize interrupt frame and load executable. */
@@ -98,23 +98,20 @@ start_process (void *file_name_)
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (arg_ptr[0], &if_.eip, &if_.esp);
-
-  printf("load finished %s\n", file_name_);
+  cur -> loadstat = success;
+  strlcpy(cur -> process_name, arg_ptr[0], strlen(arg_ptr[0]) + 1);
+  sema_up(&cur->waitsema);
 
   /* If load failed, quit. */
   if (!success) 
   {
-    printf("not success\n");
     thread_exit ();
   }
   else
   {
-    printf("stack creation complete\n");
     //Enlarge stack
     if_.esp -= arg_stack_size;
     next_esp = (char *)pagedir_get_page(cur->pagedir, if_.esp);
-    printf("next_esp: %p, esp: %p\n", next_esp, if_.esp);
-    printf("enlarge stack complete\n");
 
     address_walk = 0;
     //Fill stack
@@ -125,28 +122,21 @@ start_process (void *file_name_)
       arg_ptr[index] = if_.esp + address_walk;
       address_walk += strlen(arg_ptr[index])+1;
       next_esp += (strlen(arg_ptr[index]) + 1);
-      printf("%d index strcpy complete\n", index);
-      printf("data copied to stack %s", arg_ptr[index]);
     }
-    printf("fill stack complete\n");
 
 
     // Word align
     (if_.esp)--;
     for(;(int)if_.esp % 4;(if_.esp)--)
     {
-      printf("data : %c\n", *((char *)pagedir_get_page(cur->pagedir, if_.esp)));
       *((char *)pagedir_get_page(cur->pagedir, if_.esp)) = 0;
 
     }
-    printf("word align complete\n");
-    printf("word align data copied to stack %s\n", arg_ptr[0]);
 
     //Enlarge stack
     if_.esp -= ((arg_count+1) * 4);
     next_esp = (char *)pagedir_get_page(cur->pagedir, if_.esp);
 
-    printf("data copied to stack %s", arg_ptr[0]);
 
     //Fill stack with argv pointer
     for(index = 0; index < (arg_count + 1); index++)
@@ -157,26 +147,21 @@ start_process (void *file_name_)
         *((char **)next_esp) = arg_ptr[index];
       next_esp += 4;
     }
-    printf("argv pointer fill complete\n");
-    printf("data copied to stack %s", arg_ptr[0]);
 
     //Enlarge stack & put argv
     if_.esp -= 4;
     *((char**)pagedir_get_page(cur->pagedir, if_.esp)) = (char*)if_.esp + 4;
-    printf("put argv data copied to stack %s", arg_ptr[0]);
 
     //Enlarge stack & put argc
     if_.esp -= 4;
     *((int*)pagedir_get_page(cur->pagedir, if_.esp)) = arg_count;
-    printf("put argc data copied to stack %s", arg_ptr[0]);
 
     //Enlarge stack & put dummy return address
     if_.esp -= 4;
     *((char**)pagedir_get_page(cur->pagedir, if_.esp)) = 0;
-    printf("put ret addr data copied to stack %s", arg_ptr[0]);
 
     //char buffer[1024];
-    hex_dump(PHYS_BASE-64, (char *)pagedir_get_page(cur->pagedir, PHYS_BASE-64), 64, true);
+   // hex_dump(PHYS_BASE-64, (char *)pagedir_get_page(cur->pagedir, PHYS_BASE-64), 64, true);
   }
 
   palloc_free_page (file_name);
@@ -203,7 +188,21 @@ start_process (void *file_name_)
   int
 process_wait (tid_t child_tid UNUSED) 
 {
-  return -1;
+  int exit_code;
+  struct thread* cur_thread = thread_current();
+  struct thread* child_thread = get_thread(child_tid);
+  if(child_thread==NULL)
+    return -1;
+  sema_down(&child_thread->waitsema);
+  if(child_thread->parent != cur_thread)
+    return -1;
+  exit_code = child_thread->exitstat;
+  child_thread->exitstat = -1;
+  sema_up(&child_thread->protectsema);
+
+  return exit_code; 
+
+  //TODO: waiting already dead process??
 }
 
 /* Free the current process's resources. */
@@ -212,8 +211,13 @@ process_exit (void)
 {
   struct thread *cur = thread_current ();
   uint32_t *pd;
-  printf("before page directory destroy : %u, status:%d \n",cur, cur->status);
 
+  sema_up(&cur->waitsema);
+
+  if(cur->parent)
+  {
+    sema_down(&cur->protectsema);
+  }
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
   pd = cur->pagedir;
@@ -230,7 +234,6 @@ process_exit (void)
     pagedir_activate (NULL);
     pagedir_destroy (pd);
   }
-  printf("after page directory destroy: %u, status:%d \n",cur, cur->status);
 }
 
 /* Sets up the CPU for running user code in the current
@@ -332,7 +335,6 @@ load (const char *file_name, void (**eip) (void), void **esp)
   bool success = false;
   int i;
 
-  printf("load function\n");
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
   if (t->pagedir == NULL) 
@@ -343,7 +345,6 @@ load (const char *file_name, void (**eip) (void), void **esp)
   file = filesys_open (file_name);
   if (file == NULL) 
   {
-    printf ("load: %s: open failed\n", file_name);
     goto done; 
   }
 
@@ -356,7 +357,6 @@ load (const char *file_name, void (**eip) (void), void **esp)
       || ehdr.e_phentsize != sizeof (struct Elf32_Phdr)
       || ehdr.e_phnum > 1024) 
   {
-    printf ("load: %s: error loading executable\n", file_name);
     goto done; 
   }
 
@@ -430,7 +430,6 @@ load (const char *file_name, void (**eip) (void), void **esp)
 
 done:
   /* We arrive here whether the load is successful or not. */
-  printf("reached at done\n");
   file_close (file);
   return success;
 }
