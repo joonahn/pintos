@@ -98,7 +98,7 @@ void exit (int status)
 {
   struct thread *cur = thread_current ();
   cur->exitstat = status;
-  printf ("%s: exit(%d)\n", cur->process_name, stat);
+  printf ("%s: exit(%d)\n", cur->process_name, status);
   thread_exit ();
 }
 
@@ -106,7 +106,7 @@ int write (int fd, const void *buffer, unsigned size)
 {
   if(fd==1)
   {
-    putbuf(buffer, length);
+    putbuf(buffer, size);
   }
   else
     //TODO: implement this
