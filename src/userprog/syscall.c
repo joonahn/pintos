@@ -150,10 +150,6 @@ int open (const char *file)
     exit(-1);
 }
 
-int open (const char *file)
-{
-  
-}
 
 int arg_check(int syscall_number,
     uint32_t * arg1, uint32_t * arg2, uint32_t * arg3)
