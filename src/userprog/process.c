@@ -221,7 +221,8 @@ process_wait (tid_t child_tid UNUSED)
 process_exit (void)
 {
   struct thread *cur = thread_current ();
-  struct file * rox;
+  struct file * rox_file;
+  struct inode * rox_inode;
   uint32_t *pd;
 
 
@@ -233,8 +234,12 @@ process_exit (void)
   }
 
   //allow write
-  rox = filesys_open(cur->process_name);
-  file_close(rox);
+  rox_file = filesys_open(cur->process_name);
+  rox_inode = file_get_inode(rox_file);
+  printf("inode in exit time:%p\n",rox_inode);
+  printf("inode deny number in exit time:%d\n",inode_deny_number(rox_inode));
+  inode_allow_write (rox_inode);
+  file_close(rox_file);
   printf("file closed\n");
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
@@ -447,13 +452,15 @@ load (const char *file_name, void (**eip) (void), void **esp)
 
   success = true;
 
-  //Write Protection on Executable
-  file_deny_write(file);
+  //Write protection on inode
   f_node = file_get_inode (file);
-  printf("file_deny_write with protection cnt %d\n", inode_deny_number(f_node));
+  printf("inode in load time: %p\n", f_node);
+  inode_deny_write (f_node);
+  printf("inode deny number in load time:%d\n", inode_deny_number(f_node));
 
 done:
   /* We arrive here whether the load is successful or not. */
+  printf("FILE MUST NOT BE DENIED -> HAVE TO BE ZERO :%d\n",file_get_deny(file));
   file_close (file);
   return success;
 }
