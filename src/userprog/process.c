@@ -43,10 +43,16 @@ process_execute (const char *file_name)
 
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  // printf("Tcreat Tid:%d\n",tid);
   struct thread* t = get_thread(tid);
   sema_down(&t->waitsema);
+  // printf("getThraed Tid:%d\n",t->tid);
   if(!t -> loadstat)
+  {
+    // printf("HI NNN\n");
     return -1;
+  }
+  sema_up(&t->protectsema);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy);
   else
@@ -98,10 +104,12 @@ start_process (void *file_name_)
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (arg_ptr[0], &if_.eip, &if_.esp);
+  // printf("Load Success:%d\n",success);
+  // printf("Load Tid:%d\n",cur->tid);
   cur -> loadstat = success;
   strlcpy(cur -> process_name, arg_ptr[0], strlen(arg_ptr[0]) + 1);
   sema_up(&cur->waitsema);
-
+  sema_down(&cur->protectsema);
   /* If load failed, quit. */
   if (!success) 
   {
@@ -191,6 +199,7 @@ process_wait (tid_t child_tid UNUSED)
   int exit_code;
   struct thread* cur_thread = thread_current();
   struct thread* child_thread = get_thread(child_tid);
+  // printf("get_thread : %p\n", get_thread(child_tid));
   if(child_thread==NULL)
     return -1;
   sema_down(&child_thread->waitsema);
@@ -200,6 +209,7 @@ process_wait (tid_t child_tid UNUSED)
   child_thread->exitstat = -1;
   sema_up(&child_thread->protectsema);
 
+  sema_down(&child_thread->waitsema);
   return exit_code; 
 
   //TODO: waiting already dead process??
@@ -210,7 +220,9 @@ process_wait (tid_t child_tid UNUSED)
 process_exit (void)
 {
   struct thread *cur = thread_current ();
+  struct file * rox;
   uint32_t *pd;
+
 
   sema_up(&cur->waitsema);
 
@@ -218,6 +230,12 @@ process_exit (void)
   {
     sema_down(&cur->protectsema);
   }
+
+  //allow write
+  rox = filesys_open(cur->process_name);
+  file_allow_write(rox);
+  file_close(rox);
+
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
   pd = cur->pagedir;
@@ -427,6 +445,9 @@ load (const char *file_name, void (**eip) (void), void **esp)
   *eip = (void (*) (void)) ehdr.e_entry;
 
   success = true;
+
+  //Write Protection on Executable
+  file_deny_write(file);
 
 done:
   /* We arrive here whether the load is successful or not. */

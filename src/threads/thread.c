@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "threads/malloc.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -307,7 +308,9 @@ thread_exit (void)
      and schedule another process.  That process will destroy us
      when it calls thread_schedule_tail(). */
   intr_disable ();
+  // printf("thread_remove\n");
   list_remove (&thread_current()->allelem);
+  sema_up(&thread_current()->waitsema);
   thread_current ()->status = THREAD_DYING;
   schedule ();
   NOT_REACHED ();
@@ -343,7 +346,11 @@ get_thread(tid_t tid_)
   {
     struct thread* ret = list_entry (e, struct thread, allelem);
     if(ret->tid == tid_)
+    {
+      if(ret->status == THREAD_DYING)
+        return NULL;
       return ret;
+    }
   }
   return NULL;
 }

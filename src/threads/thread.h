@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "threads/synch.h"
 #include "filesys/file.h"
+#include "filesys/fdmap.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -16,13 +17,6 @@ enum thread_status
     THREAD_DYING        /* About to be destroyed. */
   };
 
-/* File Descriptor mapping information */
-struct fd_mapping {
-  int fd;
-  struct file * fp;
-  //list information
-  struct list_elem fdmap_elem;
-};
 
 /* Thread identifier type.
    You can redefine this to whatever type you like. */
@@ -33,6 +27,7 @@ typedef int tid_t;
 #define PRI_MIN 0                       /* Lowest priority. */
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
+
 
 /* A kernel thread or user process.
 

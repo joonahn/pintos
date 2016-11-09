@@ -4,6 +4,9 @@
 #include <debug.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "filesys/file.h"
+#include "threads/thread.h"
+#include <list.h>
 
 typedef int pid_t;
 
