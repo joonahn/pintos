@@ -11,6 +11,7 @@
 #include "filesys/directory.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
+#include "filesys/inode.h"
 #include "threads/flags.h"
 #include "threads/init.h"
 #include "threads/interrupt.h"
@@ -233,9 +234,8 @@ process_exit (void)
 
   //allow write
   rox = filesys_open(cur->process_name);
-  file_allow_write(rox);
   file_close(rox);
-
+  printf("file closed\n");
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
   pd = cur->pagedir;
@@ -346,6 +346,7 @@ static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
   bool
 load (const char *file_name, void (**eip) (void), void **esp) 
 {
+  struct inode * f_node;
   struct thread *t = thread_current ();
   struct Elf32_Ehdr ehdr;
   struct file *file = NULL;
@@ -448,6 +449,8 @@ load (const char *file_name, void (**eip) (void), void **esp)
 
   //Write Protection on Executable
   file_deny_write(file);
+  f_node = file_get_inode (file);
+  printf("file_deny_write with protection cnt %d\n", inode_deny_number(f_node));
 
 done:
   /* We arrive here whether the load is successful or not. */
