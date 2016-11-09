@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/synch.h"
+#include "filesys/file.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -14,6 +15,14 @@ enum thread_status
     THREAD_BLOCKED,     /* Waiting for an event to trigger. */
     THREAD_DYING        /* About to be destroyed. */
   };
+
+/* File Descriptor mapping information */
+struct fd_mapping {
+  int fd;
+  struct file * fp;
+  //list information
+  struct list_elem fdmap_elem;
+};
 
 /* Thread identifier type.
    You can redefine this to whatever type you like. */
@@ -106,6 +115,7 @@ struct thread
     struct semaphore protectsema;       /* Protecting child process delete */
     struct list child_list;                  /* List of chlid process */
     struct thread* parent;              /* List of parent process */
+    struct list fd_mapping_list;        /* List of fd - fp mapping */
 #endif
 
     /* Owned by thread.c. */

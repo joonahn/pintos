@@ -1,11 +1,18 @@
 #include "userprog/syscall.h"
 #include <stdio.h>
+#include <string.h>
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "userprog/process.h"
 #include "userprog/pagedir.h"
 #include "devices/shutdown.h"
+#include "threads/loader.h"
+#include "filesys/filesys.h"
+
+#define PHYS_BASE ((void *) LOADER_PHYS_BASE)
+#define get_virtual_addr(addr) \
+        ((addr < PHYS_BASE) ? ((uint32_t *)pagedir_get_page(cur->pagedir, addr)) : (0))
 
 static void syscall_handler (struct intr_frame *);
 
@@ -22,10 +29,10 @@ syscall_handler (struct intr_frame *f UNUSED)
   struct thread *cur = thread_current ();
   int syscall_number, *syscall_number_ptr;
 
-  syscall_number_ptr = (int *)pagedir_get_page(cur->pagedir, f->esp);
-  arg1 = (uint32_t *)pagedir_get_page(cur->pagedir, (f->esp) + 4);
-  arg2 = (uint32_t *)pagedir_get_page(cur->pagedir, (f->esp) + 8);
-  arg3 = (uint32_t *)pagedir_get_page(cur->pagedir, (f->esp) + 12);
+  syscall_number_ptr = get_virtual_addr(f->esp);
+  arg1 = get_virtual_addr(f->esp + 4);
+  arg2 = get_virtual_addr(f->esp + 8);
+  arg3 = get_virtual_addr(f->esp + 12);
 
   //wrong user pointer
   if(!syscall_number_ptr)
@@ -64,16 +71,24 @@ syscall_handler (struct intr_frame *f UNUSED)
     }
     case SYS_CLOSE:
     case SYS_TELL:
-    case SYS_REMOVE:
     case SYS_OPEN:
     case SYS_FILESIZE:
       break;
+    case SYS_REMOVE:
+    {
+      f->eax = remove(*((char**) arg1));
+      break;
+    }
 
 
     //#of arg : 2
     case SYS_SEEK:
-    case SYS_CREATE:
       break;
+    case SYS_CREATE:
+    {
+      f->eax = create(*((char**) arg1), *((unsigned *)arg2));
+      break;
+    }
 
 
     //#of arg : 3
@@ -113,7 +128,32 @@ int write (int fd, const void *buffer, unsigned size)
     return;
 }
 
+bool create (const char *file, unsigned initial_size)
+{
+  struct thread *cur = thread_current ();
+  if(file == NULL ||  !get_virtual_addr(file) || !strlen(file))
+    exit(-1);
+  return filesys_create(file, initial_size);
+}
 
+bool remove (const char *file)
+{
+  struct thread *cur = thread_current ();
+  if(file == NULL ||  !get_virtual_addr(file) || !strlen(file))
+    exit(-1);
+  return filesys_remove(file);
+}
+
+int open (const char *file)
+{
+  if(file == NULL ||  !get_virtual_addr(file) || !strlen(file))
+    exit(-1);
+}
+
+int open (const char *file)
+{
+  
+}
 
 int arg_check(int syscall_number,
     uint32_t * arg1, uint32_t * arg2, uint32_t * arg3)
