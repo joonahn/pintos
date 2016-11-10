@@ -40,28 +40,22 @@ process_execute (const char *file_name)
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     {
-      printf("fn_copy is null\n");
       return TID_ERROR;
     }
   strlcpy (fn_copy, file_name, PGSIZE);
 
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
-  // printf("Tcreat Tid:%d\n",tid);
   struct thread* t = get_thread(tid);
   sema_down(&t->waitsema);
-  // printf("getThraed Tid:%d\n",t->tid);
   if(!t -> loadstat)
   {
-    // printf("HI NNN\n");
-    printf("loadstat error\n");
     return -1;
   }
   sema_up(&t->protectsema);
   if (tid == TID_ERROR)
   {
     palloc_free_page (fn_copy);
-    printf("tid==TID_ERROR\n");
   }
   else
   {
@@ -111,6 +105,7 @@ start_process (void *file_name_)
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
+  //////////////////////////SEMADOWNHERE///////////////////////////
   success = load (arg_ptr[0], &if_.eip, &if_.esp);
   // printf("Load Success:%d\n",success);
   // printf("Load Tid:%d\n",cur->tid);
@@ -228,8 +223,8 @@ process_wait (tid_t child_tid UNUSED)
 process_exit (void)
 {
   struct thread *cur = thread_current ();
-  struct file * rox_file;
-  struct inode * rox_inode;
+  // struct file * rox_file;
+  //struct inode * rox_inode;
   uint32_t *pd;
 
 
@@ -241,8 +236,8 @@ process_exit (void)
   }
 
   //allow write
-  rox_file = filesys_open(cur->process_name);
-  rox_inode = file_get_inode(rox_file);
+  //rox_file = filesys_open(cur->process_name);
+  //rox_inode = file_get_inode(rox_file);
   // printf("inode in exit time:%p\n",rox_inode);
   // printf("inode deny number in exit time:%d\n",inode_deny_number(rox_inode));
   // inode_allow_write (rox_inode);
@@ -359,7 +354,7 @@ static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
   bool
 load (const char *file_name, void (**eip) (void), void **esp) 
 {
-  struct inode * f_node;
+  //struct inode * f_node;
   struct thread *t = thread_current ();
   struct Elf32_Ehdr ehdr;
   struct file *file = NULL;
@@ -373,6 +368,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
     goto done;
   process_activate ();
 
+  //printf("load::file_name:%s\n",file_name);
   /* Open executable file. */
   file = filesys_open (file_name);
   if (file == NULL) 
@@ -464,7 +460,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
   file_deny_write(file);
   t->exec_file = file;
 
-  f_node = file_get_inode (file);
+  //f_node = file_get_inode (file);
   //printf("inode in load time: %p\n", f_node);
   //inode_deny_write (f_node);
   // printf("inode deny number in load time:%d\n", inode_deny_number(f_node));

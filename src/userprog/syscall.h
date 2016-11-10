@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "filesys/file.h"
 #include "threads/thread.h"
+#include "threads/synch.h"
 #include <list.h>
 
 typedef int pid_t;

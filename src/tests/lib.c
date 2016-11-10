@@ -85,13 +85,8 @@ exec_children (const char *child_name, pid_t pids[], size_t child_cnt)
     {
       char cmd_line[128];
       snprintf (cmd_line, sizeof cmd_line, "%s %zu", child_name, i);
-      // CHECK ((pids[i] = exec (cmd_line)) != PID_ERROR,
-      //        "exec child %zu of %zu: \"%s\"", i + 1, child_cnt, cmd_line);
-      if((pids[i] = exec(cmd_line)) != PID_ERROR)
-        printf("exec child %zu of %zu: \"%s\"\n", i + 1, child_cnt, cmd_line);
-      else
-        printf("ERROR: exec child %zu of %zu: \"%s\"\n", i + 1, child_cnt, cmd_line);
-        
+      CHECK ((pids[i] = exec (cmd_line)) != PID_ERROR,
+             "exec child %zu of %zu: \"%s\"", i + 1, child_cnt, cmd_line);
     }
 }
 

@@ -20,6 +20,8 @@
 #define get_virtual_addr(addr) \
         ((addr < PHYS_BASE) ? ((uint32_t *)pagedir_get_page(cur->pagedir, addr)) : (0))
 
+struct lock *filelock = NULL;
+
 static void syscall_handler (struct intr_frame *);
 
 struct file * get_file(int _fd)
@@ -50,6 +52,11 @@ void
 syscall_init (void) 
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
+  if(filelock == NULL)
+  {
+    filelock = (struct lock *)malloc(sizeof(struct lock));
+    lock_init(filelock);
+  }
 }
 
 static void
@@ -91,9 +98,13 @@ syscall_handler (struct intr_frame *f UNUSED)
     }
     case SYS_EXEC:
     {
+
       if(!get_virtual_addr(*((char **)arg1)))
         exit(-1);
+
+      lock_acquire(filelock);
       f->eax = process_execute(*((char **)arg1));
+      lock_release(filelock);
       // printf("EAX: %d",f->eax);
       break;
     }
@@ -104,7 +115,9 @@ syscall_handler (struct intr_frame *f UNUSED)
     }
     case SYS_CLOSE:
     {
+      lock_acquire(filelock);
       close(*((int*)arg1));
+      lock_release(filelock);
       break;
     }
     case SYS_TELL:
@@ -114,7 +127,9 @@ syscall_handler (struct intr_frame *f UNUSED)
     }
     case SYS_OPEN:
     {
+      // lock_acquire(filelock);
       f->eax = open(*((char**) arg1));
+      // lock_release(filelock);
       break;
     }
     case SYS_FILESIZE:
@@ -184,7 +199,7 @@ void exit (int status)
     map = list_entry(e, struct fdmap, fdmap_elem);
     list_remove(e);
     e = list_begin(&cur->fd_mapping_list);
-    file_close(map->fp);
+    file_close(map->fp);/////////////////////////////////////////
     free(map);
     if(!list_size(&cur->fd_mapping_list))
       break;
@@ -208,7 +223,7 @@ int write (int _fd, const void *buffer, unsigned size)
   else
   {
     struct file * f;
-    struct inode * f_node;
+    //struct inode * f_node;
     f = get_file(_fd);
     //f_node = file_get_inode (f);
     // printf("write, deny_num: %d\n", inode_deny_number(f_node));
@@ -219,8 +234,11 @@ int write (int _fd, const void *buffer, unsigned size)
 bool create (const char *file, unsigned initial_size)
 {
   struct thread *cur = thread_current ();
+
   if(file == NULL ||  !get_virtual_addr(file) || !strlen(file))
     exit(-1);
+
+
   return filesys_create(file, initial_size);
 }
 
@@ -236,6 +254,8 @@ int open (const char *file)
 {
   int _fd = 2;
   struct thread *cur = thread_current ();
+  
+
   if(file == NULL ||  !get_virtual_addr(file))
     exit(-1);
   if(!strlen(file))
@@ -272,7 +292,9 @@ int open (const char *file)
   struct fdmap * mapping = 
     (struct fdmap *)malloc(sizeof(struct fdmap));
   mapping->fd = _fd;
+  lock_acquire(filelock);
   mapping->fp = filesys_open(file);
+  lock_release(filelock);
   if(!mapping->fp)
   {
     free(mapping);
