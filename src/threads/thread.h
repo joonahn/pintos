@@ -111,6 +111,7 @@ struct thread
     struct list child_list;                  /* List of chlid process */
     struct thread* parent;              /* List of parent process */
     struct list fd_mapping_list;        /* List of fd - fp mapping */
+    struct file * exec_file;            /* file pointer of executable */
 #endif
 
     /* Owned by thread.c. */

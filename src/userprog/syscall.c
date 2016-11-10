@@ -151,7 +151,6 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_WRITE:
     {
       f->eax = write(*((int*)arg1), *((char**) arg2), *((unsigned *)arg3));
-      printf("#of bytes written: %d\n", f->eax);
       break;
     }
   }
@@ -210,8 +209,8 @@ int write (int _fd, const void *buffer, unsigned size)
     struct file * f;
     struct inode * f_node;
     f = get_file(_fd);
-    f_node = file_get_inode (f);
-    printf("write, deny_num: %d\n", inode_deny_number(f_node));
+    //f_node = file_get_inode (f);
+    // printf("write, deny_num: %d\n", inode_deny_number(f_node));
     return (f!=NULL) ? file_write(f, buffer, size) : -1;
   }
 }
