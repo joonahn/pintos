@@ -184,6 +184,7 @@ void exit (int status)
     map = list_entry(e, struct fdmap, fdmap_elem);
     list_remove(e);
     e = list_begin(&cur->fd_mapping_list);
+    file_close(map->fp);
     free(map);
     if(!list_size(&cur->fd_mapping_list))
       break;

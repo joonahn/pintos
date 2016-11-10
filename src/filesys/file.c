@@ -27,6 +27,7 @@ file_open (struct inode *inode)
     }
   else
     {
+      printf("file_open::else, NULL return, inode:%p, file:%p\n", inode, file);
       inode_close (inode);
       free (file);
       return NULL; 

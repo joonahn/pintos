@@ -39,7 +39,10 @@ process_execute (const char *file_name)
      Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
-    return TID_ERROR;
+    {
+      printf("fn_copy is null\n");
+      return TID_ERROR;
+    }
   strlcpy (fn_copy, file_name, PGSIZE);
 
   /* Create a new thread to execute FILE_NAME. */
@@ -51,11 +54,15 @@ process_execute (const char *file_name)
   if(!t -> loadstat)
   {
     // printf("HI NNN\n");
+    printf("loadstat error\n");
     return -1;
   }
   sema_up(&t->protectsema);
   if (tid == TID_ERROR)
+  {
     palloc_free_page (fn_copy);
+    printf("tid==TID_ERROR\n");
+  }
   else
   {
  //   list_push_front(&cur->child_list, &cur->childelem);
@@ -362,7 +369,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
 
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
-  if (t->pagedir == NULL) 
+  if (t->pagedir == NULL)
     goto done;
   process_activate ();
 
