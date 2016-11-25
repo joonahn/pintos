@@ -15,6 +15,7 @@ struct frame {
 };
 
 void frame_table_init(void);
+struct frame* frame_table_seek(uint32_t * vaddr, uint32_t * pagedir);
 
 uint32_t* frame_get_vaddr(struct frame*);
 uint32_t* frame_get_pagedir(struct frame*);

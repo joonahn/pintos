@@ -11,6 +11,20 @@ void frame_table_init()
 	}
 }
 
+struct frame * frame_table_seek(uint32_t* _vaddr, uint32_t* _pagedir)
+{
+  int i;
+  for (i = 0; i < FRAME_TABLE_SIZE; ++i)
+  {
+    if((frame_table[i].vaddr == _vaddr) && (frame_table[i].pagedir == _pagedir) && frame_table[i].valid)
+    {
+      return &frame_table[i];
+    }
+  }
+
+  return NULL;
+}
+
 
 uint32_t* frame_get_vaddr(struct frame* f)
 {
