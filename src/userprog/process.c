@@ -20,6 +20,9 @@
 #include "threads/thread.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "vm/frame.h"
+
+#define USER_BASE 0x280000
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
@@ -256,6 +259,15 @@ process_exit (void)
        directory before destroying the process's page
        directory, or our active page directory will be one
        that's been freed (and cleared). */
+
+    //free frame table entry
+    // int i;
+    // for (i = 0; i < FRAME_TABLE_SIZE; i++)
+    // {
+    //   if(frame_get_pagedir(&frame_table[i]) == pd)
+    //     frame_set_valid(&frame_table[i], 0);
+    // }
+
     cur->pagedir = NULL;
     pagedir_activate (NULL);
     pagedir_destroy (pd);
@@ -571,6 +583,15 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
       palloc_free_page (kpage);
       return false; 
     }
+    else
+    {
+      printf("vtop(kpage) is: %p\n", vtop(kpage));
+      printf("kpage is: %p\n", (kpage));
+      printf("load segment: %p\n", (vtop(kpage) - USER_BASE));
+      frame_set_vaddr(&frame_table[(vtop(kpage) - USER_BASE)>>22], (uint32_t *)upage);
+      frame_set_valid(&frame_table[(vtop(kpage) - USER_BASE)>>22], 1);
+      // frame_set_pagedir(&frame_table[(vtop(kpage) - USER_BASE)>>22], thread_current()->pagedir);
+    }
 
     /* Advance. */
     read_bytes -= page_read_bytes;
@@ -593,7 +614,12 @@ setup_stack (void **esp)
   {
     success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
     if (success)
+    {
       *esp = PHYS_BASE;
+      frame_set_vaddr(&frame_table[(vtop(kpage) - USER_BASE)>>22], ((uint8_t *) PHYS_BASE) - PGSIZE);
+      frame_set_valid(&frame_table[(vtop(kpage) - USER_BASE)>>22], 1);
+      // frame_set_pagedir(&frame_table[(vtop(kpage) - USER_BASE)>>22], thread_current()->pagedir);
+    }
     else
       palloc_free_page (kpage);
   }
