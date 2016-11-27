@@ -318,8 +318,16 @@ int read (int _fd, void *buffer, unsigned length)
 {
   //exception handling
   struct thread *cur = thread_current ();
-  if(get_virtual_addr(buffer) == 0)
+  // if(get_virtual_addr(buffer) == 0)
+  // {
+  //   printf("getvirtualaddr\n");
+  //   exit(-1);
+  // }
+  if(buffer >= PHYS_BASE)
+  {
     exit(-1);
+  }
+
 
   if(_fd==0)
   {

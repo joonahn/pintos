@@ -1,4 +1,8 @@
 #include "vm/frame.h"
+#include "threads/vaddr.h"
+#include "threads/palloc.h"
+#include "userprog/process.h"
+#include "threads/malloc.h"
 
 void frame_table_init()
 {
@@ -47,7 +51,7 @@ bool frame_get_valid (struct frame* f)
 }
 
 
-void frame_set_vaddr (struct frame* f, uint32_t* vaddr)
+void frame_set_vaddr (struct frame* f, uint8_t* vaddr)
 {
 	f->vaddr = vaddr;
 }
@@ -65,4 +69,29 @@ void frame_set_use_bit (struct frame* f, bool use_bit)
 void frame_set_valid  (struct frame* f, bool valid)
 {
 	f->valid  = valid ;
+}
+
+/** Returns frame pointer */
+/** Implement Clock Algorithm here */
+uint8_t *frame_alloc(uint32_t * upage)
+{
+	uint8_t * kpage = palloc_get_page(PAL_USER | PAL_ZERO);
+	if(kpage == NULL)
+	{
+		//Free a frame with clock algorithm
+		exit(-1);
+	}
+
+	//Set our frame table 
+	frame_set_vaddr(&frame_table[(vtop(kpage) - USER_BASE)>>22], (uint32_t *)upage);
+	frame_set_valid(&frame_table[(vtop(kpage) - USER_BASE)>>22], 1);
+	frame_set_pagedir(&frame_table[(vtop(kpage) - USER_BASE)>>22], thread_current()->pagedir);
+
+	return kpage;
+}
+
+void frame_free(uint32_t *kpage)
+{
+	palloc_free_page(kpage);
+	frame_set_valid(&frame_table[(vtop(kpage) - USER_BASE)>>22], 0);
 }

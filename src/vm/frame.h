@@ -22,10 +22,13 @@ uint32_t* frame_get_pagedir(struct frame*);
 bool frame_get_use_bit(struct frame*);
 bool frame_get_valid (struct frame*);
 
-void frame_set_vaddr(struct frame*, uint32_t*);
+void frame_set_vaddr(struct frame*, uint8_t*);
 void frame_set_pagedir(struct frame*, uint32_t*);
 void frame_set_use_bit(struct frame*, bool);
 void frame_set_valid (struct frame*, bool);
 
+//include eviction
+uint8_t *frame_alloc(uint32_t * uaddr);
+void frame_free(uint32_t * kpage);
 
 #endif

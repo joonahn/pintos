@@ -103,6 +103,7 @@ struct thread
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
+    struct hash * sup_page_table;       /* Supplement Page Table. */
     int exitstat;                       /* To determine exit code of process*/
     bool loadstat;                      /* To determine load success*/
     char* process_name;             /* process name */
