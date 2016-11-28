@@ -35,6 +35,7 @@ struct page* page_lookup (const void* address, struct hash * sup_page_table);
 void set_page(struct page * pte, uint8_t *vaddr, struct file * file, int file_offset, int size, bool valid, bool evicted, enum PAGE_TYPE page_type, bool prevent, bool writable);
 bool load_page(struct page * pte);
 struct hash_elem * get_hash_elem(struct page * pte);
+void grow_stack(uint8_t *vaddr);
 
 
 

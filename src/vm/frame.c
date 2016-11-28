@@ -7,6 +7,7 @@
 void frame_table_init()
 {
 	int i;
+	clock_hand = 0;
 	frame_table = malloc(FRAME_TABLE_SIZE * sizeof(struct frame));
 	for (i = 0; i < FRAME_TABLE_SIZE; ++i)
 	{
@@ -76,19 +77,37 @@ void frame_set_valid  (struct frame* f, bool valid)
 uint8_t *frame_alloc(uint32_t * upage)
 {
 	uint8_t * kpage = palloc_get_page(PAL_USER | PAL_ZERO);
+	int i;
+	/* In case of no physical frame left: frame eviction through clock algorithm! */
 	if(kpage == NULL)
 	{
-		//Free a frame with clock algorithm
+		// clock_hand++;
+		// for(;pagedir_is_accessed(frame_table[clock_hand].pagedir, frame_table[clock_hand].vaddr); clock_hand++)
+		// {
+		// 	if(clock_hand == FRAME_TABLE_SIZE)
+		// 	{
+		// 		clock_hand = 0;
+		// 		for (i = 0; i < FRAME_TABLE_SIZE; ++i)
+		// 			pagedir_set_accessed(frame_table[clock_hand].pagedir, frame_table[clock_hand].vaddr, 0);
+		// 	}
+		// }
+		//TODO:eviction and new allocation here
+
+
+
+
 		exit(-1);
 	}
 
 	//Set our frame table 
-	frame_set_vaddr(&frame_table[(vtop(kpage) - USER_BASE)>>22], (uint32_t *)upage);
-	frame_set_valid(&frame_table[(vtop(kpage) - USER_BASE)>>22], 1);
-	frame_set_pagedir(&frame_table[(vtop(kpage) - USER_BASE)>>22], thread_current()->pagedir);
+	frame_table[(vtop(kpage) - USER_BASE)>>22].vaddr = (uint32_t *)upage;
+	frame_table[(vtop(kpage) - USER_BASE)>>22].valid = 1;
+	frame_table[(vtop(kpage) - USER_BASE)>>22].pagedir = thread_current()->pagedir;
 
 	return kpage;
 }
+
+
 
 void frame_free(uint32_t *kpage)
 {

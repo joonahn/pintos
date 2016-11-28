@@ -82,6 +82,15 @@ struct hash_elem * get_hash_elem(struct page * pte)
   return &(pte->entryelem);
 }
 
+void grow_stack(uint8_t *vaddr)
+{
+  uint8_t * kpage = frame_alloc(vaddr);
+  struct page * pte = malloc(sizeof(struct page));
+
+  set_page(pte, vaddr, NULL, 0,0,1,0,PAGE_SWAP, 0,1);
+  install_page(vaddr, kpage, true);
+}
+
   static bool
 install_page (void *upage, void *kpage, bool writable)
 {
@@ -92,4 +101,5 @@ install_page (void *upage, void *kpage, bool writable)
   return (pagedir_get_page (t->pagedir, upage) == NULL
       && pagedir_set_page (t->pagedir, upage, kpage, writable));
 }
+
 

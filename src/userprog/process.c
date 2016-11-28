@@ -23,7 +23,6 @@
 #include "vm/frame.h"
 #include "vm/page.h"
 
-
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
@@ -590,17 +589,26 @@ setup_stack (void **esp)
 {
   uint8_t *kpage;
   bool success = false;
+  struct page * pte;
 
   kpage = palloc_get_page (PAL_USER | PAL_ZERO);
   if (kpage != NULL) 
   {
     success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
+    thread_current()->stack_limit = 
+      (void *)(((uint8_t *) PHYS_BASE) - (PGSIZE));
+
     if (success)
     {
       *esp = PHYS_BASE;
       frame_set_vaddr(&frame_table[(vtop(kpage) - USER_BASE)>>22], ((uint8_t *) PHYS_BASE) - PGSIZE);
       frame_set_valid(&frame_table[(vtop(kpage) - USER_BASE)>>22], 1);
       frame_set_pagedir(&frame_table[(vtop(kpage) - USER_BASE)>>22], thread_current()->pagedir);
+      
+      pte = malloc(sizeof(struct page));
+      set_page(pte, ((uint8_t *) PHYS_BASE) - PGSIZE, NULL, 0, 0, 1, 0, PAGE_SWAP, 0, 1);
+      hash_insert(thread_current()->sup_page_table, get_hash_elem(pte));   
+
     }
     else
       palloc_free_page (kpage);

@@ -6,6 +6,7 @@
 #define FRAME_TABLE_SIZE 384
 
 struct frame *frame_table;
+int clock_hand;
 
 struct frame {
 	uint32_t * vaddr;

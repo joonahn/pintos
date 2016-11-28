@@ -29,6 +29,7 @@
 #include "userprog/syscall.h"
 #include "userprog/tss.h"
 #include "vm/frame.h"
+#include "vm/swap.h"
 #else
 #include "tests/threads/tests.h"
 #endif
@@ -131,6 +132,7 @@ main (void)
   /* Initialize frame table */
 #ifdef USERPROG
   frame_table_init ();
+  swap_init();
 #endif
 
   printf ("Boot complete.\n");

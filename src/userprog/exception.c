@@ -130,6 +130,7 @@ page_fault (struct intr_frame *f)
   bool user;         /* True: access by user, false: access by kernel. */
   void *fault_addr;  /* Fault address. */
   struct page *fault_pte;
+  int stack_difference;
 
   /* Obtain faulting address, the virtual address that was
      accessed to cause the fault.  It may point to code or to
@@ -152,12 +153,48 @@ page_fault (struct intr_frame *f)
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
 
+  // printf("****************************\n");
+  // printf("esp: \t\t%p\n", f-> esp);
+  // printf("ebp: \t\t%p\n", f-> ebp);
+  // printf("faulted addr: %p\n", fault_addr);
+  // printf("****************************\n");
+
+  if(!user)
+  {
+    if(fault_addr>PHYS_BASE)
+      exit(-1);
+  }
+
   //get faulted PTE
   fault_pte = page_lookup(pg_round_down(fault_addr), thread_current()->sup_page_table);
   if(fault_pte != NULL)
   {
     load_page(fault_pte);
     return;
+  }
+
+
+  //Stack growth
+  stack_difference = (int)((uint8_t *)(PHYS_BASE) - (uint8_t *)(fault_addr));
+  // printf("****************************\n");
+  // printf("stack_difference:%x\n", stack_difference);
+  // printf("esp: %p\n", f-> esp);
+  // printf("fault_addr: %p\n", fault_addr);
+  // printf("stack_limit: %p\n", (thread_current()->stack_limit));
+  // printf("****************************\n");
+
+  if(stack_difference > 0 && stack_difference < 17*PGSIZE && write)
+  {
+    // printf("stack growth\n");
+    thread_current()->stack_limit = 
+      ((uint8_t *)(thread_current()->stack_limit) - PGSIZE);
+    grow_stack(thread_current()->stack_limit);
+    return;
+  }
+
+  if(!write && f->esp>fault_addr)
+  {
+    exit(-1);
   }
 
   /* To implement virtual memory, delete the rest of the function
