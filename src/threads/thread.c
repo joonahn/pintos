@@ -355,6 +355,26 @@ get_thread(tid_t tid_)
   return NULL;
 }
 
+  struct thread*
+get_thread_by_pagedir(uint32_t *pagedir_)
+{
+  struct list_elem *e;
+
+  for(e = list_begin (&all_list); e != list_end(&all_list);
+      e = list_next (e))
+  {
+    struct thread* ret = list_entry (e, struct thread, allelem);
+    if(ret->pagedir == pagedir_)
+    {
+      if(ret->status == THREAD_DYING)
+        return NULL;
+      return ret;
+    }
+  }
+  return NULL;
+}
+
+
 /* Invoke function 'func' on all threads, passing along 'aux'.
    This function must be called with interrupts off. */
   void

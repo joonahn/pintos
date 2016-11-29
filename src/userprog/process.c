@@ -569,7 +569,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
     //struct hash_elem *hash_insert (struct hash *, struct hash_elem *);
     pte = malloc(sizeof(struct page));
-    set_page(pte, upage, file, ofs, page_read_bytes, 1, 1, PAGE_EXEC, 0, writable);
+    set_page(pte, upage, file, ofs, page_read_bytes, 1, 1, PAGE_EXEC, 0, writable, 0);
     hash_insert(t->sup_page_table, get_hash_elem(pte));
 
 
@@ -601,12 +601,16 @@ setup_stack (void **esp)
     if (success)
     {
       *esp = PHYS_BASE;
-      frame_set_vaddr(&frame_table[(vtop(kpage) - USER_BASE)>>22], ((uint8_t *) PHYS_BASE) - PGSIZE);
-      frame_set_valid(&frame_table[(vtop(kpage) - USER_BASE)>>22], 1);
-      frame_set_pagedir(&frame_table[(vtop(kpage) - USER_BASE)>>22], thread_current()->pagedir);
+      frame_set_vaddr(&frame_table[(vtop(kpage) - USER_BASE)>>12], ((uint8_t *) PHYS_BASE) - PGSIZE);
+      frame_set_valid(&frame_table[(vtop(kpage) - USER_BASE)>>12], 1);
+      frame_set_pagedir(&frame_table[(vtop(kpage) - USER_BASE)>>12], thread_current()->pagedir);
+      printf("-------------------setupstack----------------------\n");
+      printf("vaddr: %p\n", ((uint8_t *) PHYS_BASE) - PGSIZE);
+      printf("valid: %p\n", 1);
+      printf("pagedir: %p\n", thread_current()->pagedir);
       
       pte = malloc(sizeof(struct page));
-      set_page(pte, ((uint8_t *) PHYS_BASE) - PGSIZE, NULL, 0, 0, 1, 0, PAGE_SWAP, 0, 1);
+      set_page(pte, ((uint8_t *) PHYS_BASE) - PGSIZE, NULL, 0, 0, 1, 0, PAGE_SWAP, 0, 1, 0);
       hash_insert(thread_current()->sup_page_table, get_hash_elem(pte));   
 
     }

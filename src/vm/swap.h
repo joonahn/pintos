@@ -7,7 +7,7 @@
 
 void swap_init(void);
 
-bool swap_move_disk(uint8_t * uaddr);
-bool swap_load(uint8_t * uaddr);
+bool swap_move_disk(uint32_t* pd, uint8_t * uaddr);
+bool swap_load(uint32_t* pd, uint8_t * uaddr);
 
 #endif

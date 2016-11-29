@@ -1,6 +1,5 @@
 #include "threads/thread.h"
 #include "vm/page.h"
-#include <hash.h>
 
 static bool install_page (void *upage, void *kpage, bool writable);
 
@@ -39,7 +38,7 @@ struct page* page_lookup (const void* address, struct hash * sup_page_table)
 
 void set_page(struct page * pte, uint8_t *vaddr, struct file * file,
               int file_offset, int size, bool valid,
-              bool evicted, enum PAGE_TYPE page_type, bool prevent, bool writable)
+              bool evicted, enum PAGE_TYPE page_type, bool prevent, bool writable, block_sector_t swap_block)
 {
   pte->vaddr = vaddr;
   pte->file = file;
@@ -50,12 +49,34 @@ void set_page(struct page * pte, uint8_t *vaddr, struct file * file,
   pte->page_type = page_type;
   pte->prevent = prevent;
   pte->writable = writable;
+  pte->swap_block = swap_block;
+}
+
+void page_set_evict(struct page * pte)
+{
+  pte->evicted = 1;
+}
+
+void page_set_swap_block(struct page* pte, block_sector_t sector)
+{
+  pte->swap_block = sector;
+}
+
+void page_set_type(struct page* pte, enum PAGE_TYPE page_type)
+{
+  pte->page_type = page_type;
+}
+
+block_sector_t page_get_swap_block(struct page* pte)
+{
+  return pte->swap_block;
 }
 
 bool load_page(struct page * pte)
 {
   uint8_t * kpage = frame_alloc(pte->vaddr);
   pte->prevent = 1;
+  // printf("right before page type switch\n");
   switch(pte->page_type)
   {
     case PAGE_EXEC:
@@ -71,9 +92,22 @@ bool load_page(struct page * pte)
       pte->evicted = 0;
       break;
     }
+    case PAGE_SWAP:
+    {
+      printf("is evicted:%d\n",pte->evicted);
+      if(pte->evicted)
+      {
+        //Load from swap disk
+        swap_load(thread_current()->pagedir, pte->vaddr);
+        pte->evicted = 0;
+      }
+      break;
+    }
   }
+  // printf("right after page type switch\n");
   pte->prevent = 0;
   install_page(pte->vaddr, kpage, pte->writable);
+  // printf("right after installing page\n");
   return true;
 }
 
@@ -87,7 +121,7 @@ void grow_stack(uint8_t *vaddr)
   uint8_t * kpage = frame_alloc(vaddr);
   struct page * pte = malloc(sizeof(struct page));
 
-  set_page(pte, vaddr, NULL, 0,0,1,0,PAGE_SWAP, 0,1);
+  set_page(pte, vaddr, NULL, 0,0,1,0,PAGE_SWAP, 0,1,0);
   install_page(vaddr, kpage, true);
 }
 

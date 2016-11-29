@@ -2,7 +2,8 @@
 #define VM_PAGE_H
 
 #include <hash.h>
-
+#include <bitmap.h>
+#include "devices/block.h"
 
 enum PAGE_TYPE {
 	PAGE_EXEC,
@@ -23,6 +24,7 @@ struct page
   enum PAGE_TYPE page_type;
   bool prevent;
   bool writable;
+  block_sector_t swap_block;
   
   struct hash_elem entryelem;
 };
@@ -32,7 +34,11 @@ struct hash * page_init(void);
 unsigned page_hash(const struct hash_elem *elem, void* aux);
 bool page_less(const struct hash_elem *a, const struct hash_elem *b, void* aux);
 struct page* page_lookup (const void* address, struct hash * sup_page_table);
-void set_page(struct page * pte, uint8_t *vaddr, struct file * file, int file_offset, int size, bool valid, bool evicted, enum PAGE_TYPE page_type, bool prevent, bool writable);
+void set_page(struct page * pte, uint8_t *vaddr, struct file * file, int file_offset, int size, bool valid, bool evicted, enum PAGE_TYPE page_type, bool prevent, bool writable, block_sector_t swap_block);
+void page_set_evict(struct page * pte);
+void page_set_swap_block(struct page* pte, block_sector_t sector);
+void page_set_type(struct page* pte, enum PAGE_TYPE page_type);
+block_sector_t page_get_swap_block(struct page* pte);
 bool load_page(struct page * pte);
 struct hash_elem * get_hash_elem(struct page * pte);
 void grow_stack(uint8_t *vaddr);

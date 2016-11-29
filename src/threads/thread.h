@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include <hash.h>
 #include "threads/synch.h"
 #include "filesys/file.h"
 #include "filesys/fdmap.h"
@@ -100,10 +101,10 @@ struct thread
 
     struct list_elem childelem;         /* List element for child list */
 
+    struct hash * sup_page_table;       /* Supplement Page Table. */
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
-    struct hash * sup_page_table;       /* Supplement Page Table. */
     int exitstat;                       /* To determine exit code of process*/
     bool loadstat;                      /* To determine load success*/
     char* process_name;             /* process name */
@@ -145,6 +146,7 @@ void thread_exit (void) NO_RETURN;
 void thread_yield (void);
 
 struct thread* get_thread(tid_t tid);
+struct thread* get_thread_by_pagedir(uint32_t *pagedir);
 
 /* Performs some operation on thread t, given auxiliary data AUX. */
 typedef void thread_action_func (struct thread *t, void *aux);

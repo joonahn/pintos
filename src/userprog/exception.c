@@ -157,20 +157,72 @@ page_fault (struct intr_frame *f)
   // printf("esp: \t\t%p\n", f-> esp);
   // printf("ebp: \t\t%p\n", f-> ebp);
   // printf("faulted addr: %p\n", fault_addr);
+  // printf("not present: %d\n",not_present );
+  // printf("write: %d\n",write );
+  // printf("user: %d\n",user );
+  // printf("thread_current()->stack_limit : %p\n", thread_current()->stack_limit);
   // printf("****************************\n");
 
+  //Error Handling (Write to r/o page)
+  if(!not_present && write)
+  {
+    // printf ("[WRITE TO R/O PAGE!]Page fault at %p: %s error %s page in %s context.\n",
+    // fault_addr,
+    // not_present ? "not present" : "rights violation",
+    // write ? "writing" : "reading",
+    // user ? "user" : "kernel");
+    printf("exit type 1\n");
+    exit(-1);
+  }
+
+  //Error Handling (kernel faults kernel address, stack protection)
   if(!user)
   {
     if(fault_addr>PHYS_BASE)
+    {
+      // printf ("[KERNEL BUGS]Page fault at %p: %s error %s page in %s context.\n",
+      // fault_addr,
+      // not_present ? "not present" : "rights violation",
+      // write ? "writing" : "reading",
+      // user ? "user" : "kernel");
+      printf("exit type 2\n");
       exit(-1);
+    }
+
+    // printf("thread_current()->stack_limit : %p\n", thread_current()->stack_limit);
+    // printf("write: %d\n", write);
+    // printf("eip: %p\n", f->eip);
+
+
   }
+
 
   //get faulted PTE
   fault_pte = page_lookup(pg_round_down(fault_addr), thread_current()->sup_page_table);
   if(fault_pte != NULL)
   {
+    // printf("load page\n");
     load_page(fault_pte);
     return;
+  }
+
+  //syscall reads below the stack limit
+  if(!user)
+  {
+    if((thread_current()->stack_limit > fault_addr))
+    {
+        printf("****************************\n");
+        printf("esp: \t\t%p\n", f-> esp);
+        printf("ebp: \t\t%p\n", f-> ebp);
+        printf("faulted addr: %p\n", fault_addr);
+        printf("not present: %d\n",not_present );
+        printf("write: %d\n",write );
+        printf("user: %d\n",user );
+        printf("thread_current()->stack_limit : %p\n", thread_current()->stack_limit);
+        printf("****************************\n");
+      printf("exit type 3\n");
+      exit(-1);
+    }
   }
 
 
@@ -192,10 +244,6 @@ page_fault (struct intr_frame *f)
     return;
   }
 
-  if(!write && f->esp>fault_addr)
-  {
-    exit(-1);
-  }
 
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to
@@ -206,6 +254,7 @@ page_fault (struct intr_frame *f)
   //         write ? "writing" : "reading",
   //         user ? "user" : "kernel");
   // kill (f);
+  printf("exit type 4\n");
   exit(-1);
 }
 
