@@ -212,8 +212,10 @@ thread_create (const char *name, int priority,
   t->process_name = (char*)malloc(128*sizeof(char));
   sema_init (&t->waitsema, 0);
   sema_init (&t->protectsema, 0);
+  sema_init (&t->childprotectsema, 0);
   list_init (&t->child_list);
   list_init (&t->fd_mapping_list);
+  list_init (&t->mmap_list);
 #endif
 
   /* Add to run queue. */

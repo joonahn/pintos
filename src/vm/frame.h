@@ -7,6 +7,7 @@
 
 struct frame *frame_table;
 int clock_hand;
+struct semaphore frame_sema;
 
 struct frame {
 	uint32_t * vaddr;

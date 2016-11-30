@@ -171,7 +171,7 @@ page_fault (struct intr_frame *f)
     // not_present ? "not present" : "rights violation",
     // write ? "writing" : "reading",
     // user ? "user" : "kernel");
-    printf("exit type 1\n");
+    // printf("exit type 1\n");
     exit(-1);
   }
 
@@ -185,7 +185,7 @@ page_fault (struct intr_frame *f)
       // not_present ? "not present" : "rights violation",
       // write ? "writing" : "reading",
       // user ? "user" : "kernel");
-      printf("exit type 2\n");
+      // printf("exit type 2\n");
       exit(-1);
     }
 
@@ -211,16 +211,16 @@ page_fault (struct intr_frame *f)
   {
     if((thread_current()->stack_limit > fault_addr))
     {
-        printf("****************************\n");
-        printf("esp: \t\t%p\n", f-> esp);
-        printf("ebp: \t\t%p\n", f-> ebp);
-        printf("faulted addr: %p\n", fault_addr);
-        printf("not present: %d\n",not_present );
-        printf("write: %d\n",write );
-        printf("user: %d\n",user );
-        printf("thread_current()->stack_limit : %p\n", thread_current()->stack_limit);
-        printf("****************************\n");
-      printf("exit type 3\n");
+      //   printf("****************************\n");
+      //   printf("esp: \t\t%p\n", f-> esp);
+      //   printf("ebp: \t\t%p\n", f-> ebp);
+      //   printf("faulted addr: %p\n", fault_addr);
+      //   printf("not present: %d\n",not_present );
+      //   printf("write: %d\n",write );
+      //   printf("user: %d\n",user );
+      //   printf("thread_current()->stack_limit : %p\n", thread_current()->stack_limit);
+      //   printf("****************************\n");
+      // printf("exit type 3\n");
       exit(-1);
     }
   }
@@ -254,7 +254,7 @@ page_fault (struct intr_frame *f)
   //         write ? "writing" : "reading",
   //         user ? "user" : "kernel");
   // kill (f);
-  printf("exit type 4\n");
+  // printf("exit type 4\n");
   exit(-1);
 }
 

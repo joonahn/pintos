@@ -110,9 +110,11 @@ struct thread
     char* process_name;             /* process name */
     struct semaphore waitsema;          /* Implementing process wait */
     struct semaphore protectsema;       /* Protecting child process delete */
+    struct semaphore childprotectsema;  /* Support child process wait */
     struct list child_list;                  /* List of chlid process */
     struct thread* parent;              /* List of parent process */
     struct list fd_mapping_list;        /* List of fd - fp mapping */
+    struct list mmap_list;
     struct file * exec_file;            /* file pointer of executable */
     void * stack_limit;                 /* limit of stack, which grows */
 #endif

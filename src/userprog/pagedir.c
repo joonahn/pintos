@@ -68,13 +68,8 @@ lookup_page (uint32_t *pd, const void *vaddr, bool create)
      If one is missing, create one if requested. */
   pde = pd + pd_no (vaddr);
   
-  // printf("address of vaddr: %p\n",vaddr);
-  // printf("address of pd: %p\n",pd);
-  // printf("value of pd_no(vaddr): %p\n",pd_no(vaddr));
-  // printf("address of pde: %p\n",pd+pd_no(vaddr));
   if (*pde == 0) 
     {
-      // printf("22222222222222222\n");
       if (create)
         {
           pt = palloc_get_page (PAL_ZERO);

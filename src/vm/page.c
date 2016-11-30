@@ -1,6 +1,6 @@
 #include "threads/thread.h"
 #include "vm/page.h"
-
+#include "vm/frame.h"
 static bool install_page (void *upage, void *kpage, bool writable);
 
 struct hash * page_init(void)
@@ -23,6 +23,17 @@ bool page_less(const struct hash_elem* a_, const struct hash_elem* b_,
   const struct page *b = hash_entry(b_, struct page, entryelem);
 
   return a->vaddr < b->vaddr;
+}
+
+void page_destroy(const struct hash_elem *e, void *aux)
+{
+  const struct page *pte = hash_entry(e, struct page, entryelem);
+  free(pte);
+}
+
+void page_delete(const struct page * pte, struct hash * sup_page_table)
+{
+  hash_delete(sup_page_table, &pte->entryelem);
 }
 
 struct page* page_lookup (const void* address, struct hash * sup_page_table)
@@ -67,9 +78,38 @@ void page_set_type(struct page* pte, enum PAGE_TYPE page_type)
   pte->page_type = page_type;
 }
 
+int page_get_type(struct page * pte)
+{
+  return pte->page_type;
+}
+
 block_sector_t page_get_swap_block(struct page* pte)
 {
   return pte->swap_block;
+}
+
+struct file * page_get_file(struct page * pte)
+{
+  return pte->file;
+}
+
+int page_get_size(struct page * pte)
+{
+  return pte->size;
+}
+
+int page_get_file_offset(struct page * pte)
+{
+  return pte->file_offset;
+}
+
+bool page_get_evicted(struct page * pte)
+{
+  return pte->evicted;
+}
+bool page_get_valid(struct page * pte)
+{
+  return pte->valid;
 }
 
 bool load_page(struct page * pte)
@@ -86,7 +126,9 @@ bool load_page(struct page * pte)
       file_seek(pte->file, pte->file_offset);
       if(file_read(pte->file, kpage, pte->size)!=(pte->size))
       {
+        sema_down(&frame_sema);
         frame_free(kpage);
+        sema_up(&frame_sema);
         return false;
       }
       pte->evicted = 0;
@@ -94,11 +136,13 @@ bool load_page(struct page * pte)
     }
     case PAGE_SWAP:
     {
-      printf("is evicted:%d\n",pte->evicted);
+      // printf("is evicted:%d\n",pte->evicted);
       if(pte->evicted)
       {
         //Load from swap disk
-        swap_load(thread_current()->pagedir, pte->vaddr);
+        // printf("swap_load( %p, %p )\n", thread_current()->pagedir, pte->vaddr );
+        // printf("kpage : %p\n", kpage);
+        swap_load(thread_current()->pagedir, pte->vaddr, kpage);
         pte->evicted = 0;
       }
       break;

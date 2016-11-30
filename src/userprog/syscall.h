@@ -9,7 +9,21 @@
 #include "threads/synch.h"
 #include <list.h>
 
+typedef int mapid_t;
 typedef int pid_t;
+
+// mmap_id 
+struct mmap_table
+{
+	int mapid;
+	uint8_t * uaddr;
+	uint32_t * pagedir;
+	size_t size;
+	struct file * file;
+
+	//list info
+	struct list_elem mmap_elem;
+};
 
 void syscall_init (void);
 int arg_check(int, uint32_t *, uint32_t *, uint32_t *);
@@ -28,5 +42,7 @@ int write (int fd, const void *buffer, unsigned length);
 void seek (int fd, unsigned position);
 unsigned tell (int fd);
 void close (int fd);
+mapid_t mmap(int fd, void *addr);
+void munmap(mapid_t mapid);
 
 #endif /* userprog/syscall.h */

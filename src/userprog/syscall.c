@@ -4,16 +4,19 @@
 #include <string.h>
 #include <syscall-nr.h>
 #include <list.h>
+#include <hash.h>
 #include "threads/interrupt.h"
 #include "threads/malloc.h"
 #include "userprog/process.h"
 #include "userprog/pagedir.h"
 #include "devices/shutdown.h"
 #include "threads/loader.h"
+#include "threads/vaddr.h"
 #include "filesys/filesys.h"
 #include "filesys/file.h"
 #include "filesys/fdmap.h"
 #include "devices/input.h"
+#include "vm/page.h"
 
 
 #define PHYS_BASE ((void *) LOADER_PHYS_BASE)
@@ -142,6 +145,11 @@ syscall_handler (struct intr_frame *f UNUSED)
       f->eax = remove(*((char**) arg1));
       break;
     }
+    case SYS_MUNMAP:
+    {
+      munmap(*(int *)arg1);
+      break;
+    }
 
 
     //#of arg : 2
@@ -153,6 +161,11 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_CREATE:
     {
       f->eax = create(*((char**) arg1), *((unsigned *)arg2));
+      break;
+    }
+    case SYS_MMAP:
+    {
+      f->eax = mmap(*(int*)arg1, *((char **)arg2));
       break;
     }
 
@@ -178,28 +191,23 @@ void halt (void)
   shutdown_power_off();
 }
 
-//TODO: free fd-mapping 
 void exit (int status)
 {
   struct fdmap* map;
   struct list_elem * e;
   struct thread *cur = thread_current ();
-  // printf("exit called! with size %d", list_size(&cur->fd_mapping_list));
   cur->exitstat = status;
 
-  // printf("list_begin : %p\n",  list_begin(&cur->fd_mapping_list));
-  // printf("list_end : %p\n",  list_end(&cur->fd_mapping_list));
 
   for (e = list_begin(&cur->fd_mapping_list);
         e != list_end(&cur->fd_mapping_list);
         e =  list_next(e))
   {
 
-    // printf("list_entry : %p\n",  list_entry(e, struct fdmap, fdmap_elem));
     map = list_entry(e, struct fdmap, fdmap_elem);
     list_remove(e);
     e = list_begin(&cur->fd_mapping_list);
-    file_close(map->fp);/////////////////////////////////////////
+    file_close(map->fp);
     free(map);
     if(!list_size(&cur->fd_mapping_list))
       break;
@@ -278,7 +286,7 @@ int open (const char *file)
         break;
     }
 
-    if(f==NULL)
+    // if(f==NULL)
       // printf("**************f is null!\n");
 
     //Found!
@@ -388,6 +396,150 @@ void close (int _fd)
   file_close(f);
 }
 
+mapid_t mmap(int _fd, void *addr)
+{
+  struct page *pte;
+  struct file *f;
+  int page_count = 0;
+  int _filesize;
+  int tmp_page_count = 0;
+  int tmp_filesize;
+  int mapid = 0;
+  struct thread *cur = thread_current ();
+  f = get_file(_fd);
+  f = file_reopen(f);
+  tmp_filesize = _filesize = filesize(_fd);
+
+  //Exception handling
+  if(_filesize == 0 || _fd == 0 || _fd == 1 || addr == 0)
+    return -1;
+  if(((int)addr) % PGSIZE != 0)
+    return -1;
+
+  //Virtual address overlapping avoidance
+  while(tmp_filesize > 0)
+  {
+    size_t page_read_bytes = tmp_filesize < PGSIZE ? tmp_filesize : PGSIZE;
+    
+    if(page_lookup(addr + tmp_page_count * PGSIZE, cur->sup_page_table) != NULL)
+      return -1;
+
+    tmp_filesize -= page_read_bytes;
+    tmp_page_count++;
+  }
+
+  //mapping between mapid_t and pte
+  for(;;mapid++)
+  {
+    struct list_elem *e = NULL;
+    struct mmap_table *m = NULL;
+
+    for(e = list_begin(&cur->mmap_list);
+        e!= list_end(&cur->mmap_list);
+        e = list_next(e))
+    {
+      m = list_entry(e, struct mmap_table, mmap_elem);
+      if(m->mapid == mapid)
+        break;
+    }
+
+    //Found
+    if(list_empty(&cur->mmap_list) || m == NULL)
+      break;
+    if(e == list_end(&cur->mmap_list) && m->mapid != mapid)
+      break;
+  }
+
+  //map
+  struct mmap_table *mapping = malloc(sizeof(struct mmap_table));
+  mapping->mapid = mapid;
+  mapping->pagedir = cur->pagedir;
+  mapping->uaddr = addr;
+  mapping->size = _filesize;
+  mapping->file = f;
+
+  list_push_back(&cur->mmap_list, &mapping->mmap_elem);
+
+
+  while(_filesize > 0)
+  {
+    size_t page_read_bytes = _filesize < PGSIZE ? _filesize : PGSIZE;
+    
+    pte = malloc(sizeof(struct page));
+    set_page(pte, (uint8_t *)addr + page_count * PGSIZE, f,
+              page_count * PGSIZE, page_read_bytes, 1, 1, PAGE_FILE, 0, 1, 0);
+    hash_insert(thread_current()->sup_page_table, get_hash_elem(pte));
+    
+    _filesize -= page_read_bytes;
+    page_count++;
+  }
+  return mapid;
+}
+
+void munmap(mapid_t mapid)
+{
+  struct thread* cur =  thread_current();
+  struct list_elem *e;
+  struct mmap_table *map;
+  struct file *f;
+  int _filesize;
+  int page_count = 0;
+
+  for(e = list_begin(&cur->mmap_list);
+      e!= list_end(&cur->mmap_list);
+      e = list_next(e))
+  {
+    map = list_entry(e, struct mmap_table, mmap_elem);
+    if(map->mapid == mapid)
+    {
+      //File reopen
+      f = file_reopen(map->file);
+      if(f != NULL)
+      {
+        _filesize = map->size;
+
+        //Deallocate
+        while(_filesize > 0)
+        {
+          size_t page_read_bytes = _filesize < PGSIZE ? _filesize : PGSIZE;
+          struct page * page_to_unmap = page_lookup(map->uaddr + page_count * PGSIZE, 
+                                                thread_current()->sup_page_table);
+
+          //Dirty page write-back
+          if(!page_get_evicted(page_to_unmap) &&
+                      page_get_valid(page_to_unmap) && 
+                      pagedir_is_dirty(map->pagedir, map->uaddr + page_count * PGSIZE))
+          {
+            file_seek(f, page_get_file_offset(page_to_unmap));
+            file_write(page_get_file(page_to_unmap), 
+                        pagedir_get_page(map->pagedir, map->uaddr + page_count * PGSIZE),
+                        page_get_size(page_to_unmap));
+          }
+
+          //Frame dealloc
+          if(!page_get_evicted(page_to_unmap))
+          {
+            frame_free(pagedir_get_page(map->pagedir, map->uaddr + page_count * PGSIZE));
+            pagedir_clear_page(map->pagedir, map->uaddr + page_count * PGSIZE);
+          }
+
+          page_delete(page_to_unmap, thread_current()->sup_page_table);
+          
+          _filesize -= page_read_bytes;
+          page_count++;
+        }
+      }
+
+      //Deallocate
+
+
+      list_remove(e);
+      file_close(map->file);
+      free(map);
+      break;
+    }
+  }
+}
 
 int arg_check(int syscall_number,
     uint32_t * arg1, uint32_t * arg2, uint32_t * arg3)

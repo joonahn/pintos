@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <hash.h>
 #include "userprog/gdt.h"
 #include "userprog/pagedir.h"
 #include "userprog/tss.h"
@@ -50,6 +51,7 @@ process_execute (const char *file_name)
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
   struct thread* t = get_thread(tid);
   sema_down(&t->waitsema);
+  // printf("tid: %d, t->loadstat: %d\n", tid, t->loadstat);
   if(!t -> loadstat)
   {
     return -1;
@@ -212,7 +214,7 @@ process_wait (tid_t child_tid UNUSED)
     return -1;
   exit_code = child_thread->exitstat;
   child_thread->exitstat = -1;
-  sema_up(&child_thread->protectsema);
+  sema_up(&child_thread->childprotectsema);
 
   sema_down(&child_thread->waitsema);
   return exit_code; 
@@ -234,7 +236,7 @@ process_exit (void)
 
   if(cur->parent)
   {
-    sema_down(&cur->protectsema);
+    sema_down(&cur->childprotectsema);
   }
 
   //allow write
@@ -248,6 +250,23 @@ process_exit (void)
   // printf("file closed\n");
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
+
+
+  struct hash * h = cur->sup_page_table;
+  struct hash_iterator i;
+
+  hash_first(&i, h);
+  while(hash_next (&i))
+  {
+    struct page * pte = hash_entry (hash_cur(&i), struct page, entryelem);
+    if(pte->evicted && pte->page_type == PAGE_SWAP)
+      swap_delete(thread_current()->pagedir , pte->vaddr);
+  }
+
+  hash_destroy(cur->sup_page_table, page_destroy);
+  free(cur->sup_page_table);
+
+
   pd = cur->pagedir;
   if (pd != NULL) 
   {
@@ -260,12 +279,14 @@ process_exit (void)
        that's been freed (and cleared). */
 
     //free frame table entry
+    sema_down(&frame_sema);
      int i;
     for (i = 0; i < FRAME_TABLE_SIZE; i++)
     {
       if(frame_get_pagedir(&frame_table[i]) == pd)
         frame_set_valid(&frame_table[i], 0);
     }
+    sema_up(&frame_sema);
 
     cur->pagedir = NULL;
     pagedir_activate (NULL);
@@ -591,24 +612,16 @@ setup_stack (void **esp)
   bool success = false;
   struct page * pte;
 
-  kpage = palloc_get_page (PAL_USER | PAL_ZERO);
-  if (kpage != NULL) 
-  {
-    success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
-    thread_current()->stack_limit = 
-      (void *)(((uint8_t *) PHYS_BASE) - (PGSIZE));
+  kpage = frame_alloc(((uint8_t *) PHYS_BASE) - PGSIZE);
+  thread_current()->stack_limit = 
+    (void *)(((uint8_t *) PHYS_BASE) - (PGSIZE));
+  success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
+  
 
     if (success)
     {
       *esp = PHYS_BASE;
-      frame_set_vaddr(&frame_table[(vtop(kpage) - USER_BASE)>>12], ((uint8_t *) PHYS_BASE) - PGSIZE);
-      frame_set_valid(&frame_table[(vtop(kpage) - USER_BASE)>>12], 1);
-      frame_set_pagedir(&frame_table[(vtop(kpage) - USER_BASE)>>12], thread_current()->pagedir);
-      printf("-------------------setupstack----------------------\n");
-      printf("vaddr: %p\n", ((uint8_t *) PHYS_BASE) - PGSIZE);
-      printf("valid: %p\n", 1);
-      printf("pagedir: %p\n", thread_current()->pagedir);
-      
+
       pte = malloc(sizeof(struct page));
       set_page(pte, ((uint8_t *) PHYS_BASE) - PGSIZE, NULL, 0, 0, 1, 0, PAGE_SWAP, 0, 1, 0);
       hash_insert(thread_current()->sup_page_table, get_hash_elem(pte));   
@@ -616,7 +629,7 @@ setup_stack (void **esp)
     }
     else
       palloc_free_page (kpage);
-  }
+  
   return success;
 }
 
