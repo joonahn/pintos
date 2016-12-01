@@ -88,6 +88,7 @@ uint8_t *frame_alloc(uint32_t * upage)
 {
 	uint8_t * kpage;
 	int i;
+	bool prevent;
 
 	sema_down(&frame_sema);
 	// printf("thread %d got frame sema!-frame_alloc()\n", thread_current()->tid);
@@ -115,7 +116,7 @@ uint8_t *frame_alloc(uint32_t * upage)
 			}
 
 			// Increase clock hand if page is not valid
-			if(frame_table[clock_hand].pagedir == NULL || frame_table[clock_hand].valid == 0)
+			if(frame_table[clock_hand].pagedir == NULL || frame_table[clock_hand].valid == 0 )
 			{
 				clock_hand++;
 				continue;

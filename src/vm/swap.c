@@ -23,7 +23,7 @@ bool swap_move_disk(uint32_t* pd, uint8_t * uaddr)
 {
 	int i;
 	sema_down(&swap_sema);
-	timer_msleep(10);
+	timer_msleep(20);
 	block_sector_t sector = bitmap_scan_and_flip (swap_map, 0, 8, false);
 	ASSERT(sector != BITMAP_ERROR);
 	for (i = 0; i < 8; i++)
@@ -42,7 +42,7 @@ bool swap_load(uint32_t* pd, uint8_t * uaddr, uint8_t *kpage)
 	int i;
 	struct thread* t;
 	sema_down(&swap_sema);
-	timer_msleep(10);
+	timer_msleep(20);
 	// printf("thread %d got swap sema!-swap_load()\n", thread_current()->tid);
 	t = get_thread_by_pagedir(pd);
 	ASSERT(t!=NULL);
@@ -63,7 +63,7 @@ void swap_delete(uint32_t *pd, uint8_t * uaddr)
 	int i;
 	struct thread* t;
 	sema_down(&swap_sema);
-	timer_msleep(10);
+	timer_msleep(20);
 	// printf("thread %d got swap sema!-swap_delete()\n", thread_current()->tid);
 	t = get_thread_by_pagedir(pd);
 	ASSERT(t!=NULL);

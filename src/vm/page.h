@@ -48,6 +48,7 @@ int page_get_size(struct page * pte);
 bool page_get_evicted(struct page * pte);
 bool page_get_valid(struct page * pte);
 int page_get_file_offset(struct page * pte);
+bool page_is_prevent(struct page *pte);
 struct file * page_get_file(struct page * pte);
 block_sector_t page_get_swap_block(struct page* pte);
 bool load_page(struct page * pte);

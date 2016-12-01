@@ -112,10 +112,15 @@ bool page_get_valid(struct page * pte)
   return pte->valid;
 }
 
+bool page_is_prevent(struct page *pte)
+{
+  return pte->prevent;
+}
+
 bool load_page(struct page * pte)
 {
-  uint8_t * kpage = frame_alloc(pte->vaddr);
   pte->prevent = 1;
+  uint8_t * kpage = frame_alloc(pte->vaddr);
   // printf("right before page type switch\n");
   switch(pte->page_type)
   {
@@ -149,8 +154,8 @@ bool load_page(struct page * pte)
     }
   }
   // printf("right after page type switch\n");
-  pte->prevent = 0;
   install_page(pte->vaddr, kpage, pte->writable);
+  pte->prevent = 0;
   // printf("right after installing page\n");
   return true;
 }
@@ -165,8 +170,9 @@ void grow_stack(uint8_t *vaddr)
   uint8_t * kpage = frame_alloc(vaddr);
   struct page * pte = malloc(sizeof(struct page));
 
-  set_page(pte, vaddr, NULL, 0,0,1,0,PAGE_SWAP, 0,1,0);
+  set_page(pte, vaddr, NULL, 0,0,1,0,PAGE_SWAP,1,1,0);
   install_page(vaddr, kpage, true);
+  pte->prevent = 0;
 }
 
   static bool

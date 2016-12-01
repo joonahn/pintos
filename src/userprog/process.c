@@ -280,11 +280,14 @@ process_exit (void)
 
     //free frame table entry
     sema_down(&frame_sema);
-     int i;
+    int i;
     for (i = 0; i < FRAME_TABLE_SIZE; i++)
     {
       if(frame_get_pagedir(&frame_table[i]) == pd)
+      {
         frame_set_valid(&frame_table[i], 0);
+        //frame_free(ptov((i<<12) + USER_BASE));
+      }
     }
     sema_up(&frame_sema);
 
@@ -623,9 +626,9 @@ setup_stack (void **esp)
       *esp = PHYS_BASE;
 
       pte = malloc(sizeof(struct page));
-      set_page(pte, ((uint8_t *) PHYS_BASE) - PGSIZE, NULL, 0, 0, 1, 0, PAGE_SWAP, 0, 1, 0);
+      set_page(pte, ((uint8_t *) PHYS_BASE) - PGSIZE, NULL, 0, 0, 1, 0, PAGE_SWAP, 1, 1, 0);
       hash_insert(thread_current()->sup_page_table, get_hash_elem(pte));   
-
+      pte->prevent = 0;
     }
     else
       palloc_free_page (kpage);

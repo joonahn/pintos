@@ -194,11 +194,24 @@ void halt (void)
 void exit (int status)
 {
   struct fdmap* map;
+  struct mmap_table * mte;
   struct list_elem * e;
   struct thread *cur = thread_current ();
   cur->exitstat = status;
 
+  //Implicit munmap
+  for (e = list_begin(&cur->mmap_list);
+        e != list_end(&cur->mmap_list);
+        e =  list_next(e))
+  {
+    mte = list_entry(e, struct mmap_table, mmap_elem);
+    munmap(mte->mapid);
+    e = list_begin(&cur->mmap_list);
+    if(!list_size(&cur->mmap_list))
+      break;
+  }
 
+  //Implicit file close
   for (e = list_begin(&cur->fd_mapping_list);
         e != list_end(&cur->fd_mapping_list);
         e =  list_next(e))
@@ -212,6 +225,8 @@ void exit (int status)
     if(!list_size(&cur->fd_mapping_list))
       break;
   }
+
+
   printf ("%s: exit(%d)\n", cur->process_name, status);
   thread_exit ();
 }
@@ -504,14 +519,13 @@ void munmap(mapid_t mapid)
           size_t page_read_bytes = _filesize < PGSIZE ? _filesize : PGSIZE;
           struct page * page_to_unmap = page_lookup(map->uaddr + page_count * PGSIZE, 
                                                 thread_current()->sup_page_table);
-
           //Dirty page write-back
           if(!page_get_evicted(page_to_unmap) &&
                       page_get_valid(page_to_unmap) && 
                       pagedir_is_dirty(map->pagedir, map->uaddr + page_count * PGSIZE))
           {
             file_seek(f, page_get_file_offset(page_to_unmap));
-            file_write(page_get_file(page_to_unmap), 
+            file_write(f, 
                         pagedir_get_page(map->pagedir, map->uaddr + page_count * PGSIZE),
                         page_get_size(page_to_unmap));
           }
@@ -531,10 +545,12 @@ void munmap(mapid_t mapid)
       }
 
       //Deallocate
-
-
+      // char buf[25];
+      // file_read()
+      // printf("%s")
       list_remove(e);
       file_close(map->file);
+      file_close(f);
       free(map);
       break;
     }
