@@ -1,5 +1,6 @@
 #ifndef FILESYS_CACHE_H
 #define FILESYS_CACHE_H
+#define CACHE_SIZE 64
 
 struct cache_line {
 	uint8_t data[512];
@@ -10,6 +11,6 @@ struct cache_line {
 
 struct cache_line * cache;
 
-
+void cache_init();
 
 #endif
