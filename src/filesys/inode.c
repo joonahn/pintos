@@ -9,15 +9,20 @@
 
 /* Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
+/* Number of direct sectors */
+#define DIRECT_SECTOR_NUM 64
 
 /* On-disk inode.
    Must be exactly BLOCK_SECTOR_SIZE bytes long. */
 struct inode_disk
   {
-    block_sector_t start;               /* First data sector. */
     off_t length;                       /* File size in bytes. */
     unsigned magic;                     /* Magic number. */
-    uint32_t unused[125];               /* Not used. */
+    char file_name[16];
+    char full_path[128];
+    block_sector_t direct[DIRECT_SECTOR_NUM];
+    block_sector_t double_indirect;
+    uint32_t unused[25];               /* Not used. */
   };
 
 /* Returns the number of sectors to allocate for an inode SIZE
@@ -48,7 +53,33 @@ byte_to_sector (const struct inode *inode, off_t pos)
 {
   ASSERT (inode != NULL);
   if (pos < inode->data.length)
-    return inode->data.start + pos / BLOCK_SECTOR_SIZE;
+  {
+    block_sector_t pos_sector = pos/BLCOK_SECTOR_SIZE
+    if(pos_sector < DIRECT_SECTOR_NUM)
+      return inode->data.direct[pos_sector];
+    else
+      {
+        /* Logical sector number for doublely indirected block */
+        block_sector_t pos_sector_double = pos_sector - DIRECT_SECTOR_NUM;
+        
+        /* Buffer for sector for each level */
+        block_sector_t *level0_data;
+        block_sector_t *level1_data;
+
+        /* Indicates where block of each level exists */
+        block_sector_t level1_pos;
+        block_sector_t level2_pos;
+        block_sector_t level1_idx = pos_sector_double / 128;
+        block_sector_t level2_idx = pos_sector_double - level1_idx * 128;
+        /* Accessing level0 block */
+        block_read(fs_device, inode->data.double_indirect, level0_data);
+        level1_pos = level0_data[level1_idx];
+        /* Accessing level1 block */
+        block_read(fs_device, level1_pos, level1_data);
+        level2_pos = level1_data[level2_idx];
+        return level2_pos;
+      }
+  }
   else
     return -1;
 }
@@ -87,14 +118,54 @@ inode_create (block_sector_t sector, off_t length)
       size_t sectors = bytes_to_sectors (length);
       disk_inode->length = length;
       disk_inode->magic = INODE_MAGIC;
+      size_t allocate_succes = 1;
+      size_t i;
+      size_t i_double;
+      static char zeros[BLOCK_SECTOR_SIZE];
+      for(i=0; i<sectors; i++)
+      {
+        if(i<DIRECT_SECTOR_NUM)
+        {
+          allocate_success *= free_map_allocate(1, &disk_inode->direct[i]);
+          if(!allocate_success)
+            break;
+          block_write(fs_device, disk_inode->direct[i], zeros);
+        }
+        /* In case where double indirect block is needed */
+        else
+        {
+          i_double = i - 64;
+          /* Buffer for sector for each level */
+          block_sector_t *level0_data;
+          block_sector_t *level1_data;
+
+          /* Indicates where block of each level exists */
+          block_sector_t *level1_pos;
+          block_sector_t *level2_pos;
+          block_sector_t *level1_idx = i_double / 128;
+          block_sector_t *level2_idx = i_double - level1_idx * 128;
+          /* Allocating root block */
+          if(!i_double)
+          {
+            allocate_success *= free_map_allocate(1, &disk_inode.double_indirect);
+            if(!allocate_success)
+              break;
+            block_write(fs_device, disk_inode->double_indirect, zeros); 
+          }
+          /* Allocating first level block */
+          if(!level1_idx)
+          {
+            /////////////////LET'S DO THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//////////////////////////
+          }
+        }
+      }
       if (free_map_allocate (sectors, &disk_inode->start)) 
         {
           block_write (fs_device, sector, disk_inode);
           if (sectors > 0) 
             {
               static char zeros[BLOCK_SECTOR_SIZE];
-              size_t i;
-              
+
               for (i = 0; i < sectors; i++) 
                 block_write (fs_device, disk_inode->start + i, zeros);
             }
