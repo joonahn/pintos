@@ -37,12 +37,11 @@ void cache_lru_remove(block_sector_t sector);
 static inline size_t cache_lru_count(void);
 int cache_find_victim(void);
 
+// Cache management function
 void cache_init(void);
 void cache_flush(void);
 void dump_sector(block_sector_t sector);
-
 void cache_block_read(block_sector_t sector, void * buffer);
-
 void cache_block_write(block_sector_t sector, void * buffer);
 
 #endif

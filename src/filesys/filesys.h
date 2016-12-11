@@ -17,4 +17,9 @@ bool filesys_create (const char *name, off_t initial_size);
 struct file *filesys_open (const char *name);
 bool filesys_remove (const char *name);
 
+// filesys function for absolute path
+bool filesys_abs_create (const char *abs_name, off_t initial_size);
+struct file *filesys_abs_open (const char *abs_name);
+bool filesys_abs_remove (const char *abs_name);
+
 #endif /* filesys/filesys.h */

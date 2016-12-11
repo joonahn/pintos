@@ -18,6 +18,7 @@ struct dir_entry
   {
     block_sector_t inode_sector;        /* Sector number of header. */
     char name[NAME_MAX + 1];            /* Null terminated file name. */
+    bool is_dir;
     bool in_use;                        /* In use or free? */
   };
 

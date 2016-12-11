@@ -150,12 +150,6 @@ void cache_block_write(block_sector_t sector, void * buffer)
 {
 	int i;
 
-	// Debug
-	if(sector == 3)
-	{
-		//hex_dump (uintptr_t ofs, const void *buf_, size_t size, bool ascii)
-
-	}
 	for (i = 0; i < CACHE_SIZE; ++i)
 	{
 		if(cache[i].valid == true && 

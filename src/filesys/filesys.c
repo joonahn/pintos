@@ -89,6 +89,66 @@ filesys_remove (const char *name)
 
   return success;
 }
+
+
+/* create file with absolute path,
+   must be started with '/'
+   must NOT be ended with '/'    */
+bool filesys_abs_create (const char *abs_name, off_t initial_size)
+{
+  block_sector_t inode_sector = 0;
+  int depth = -1, i, length;
+  struct dir *dir = NULL;
+  struct inode *inode = NULL;
+  char * str, *token, *save_ptr;
+
+  //Check path
+  length = strlen(abs_name)
+  if(abs_name[0]!= '/')
+    return false;
+  if(abs_name[length-2] == '/')
+    return false;
+
+  //Parse string
+  for (i = 0; i < length; ++i)
+  {
+    if(abs_name[i] == '/')
+    {
+      if(i != (length-1) && abs_name[i+1] == '/')
+        return false;
+      depth ++;
+    }
+  }
+
+  //Open Folders
+  str = malloc(length + 1);
+  memcpy(str, abs_name, length + 1);
+  dir = dir_open_root ();
+  token = strtok_r(str, "/", &save_ptr);
+  for (i = 0; i < (depth - 1); ++i)
+  {
+    if(dir!= NULL)
+      dir_lookup(dir, token, &inode);
+    token = strtok_r(NULL, "/", &save_ptr);
+  }
+  
+
+  struct dir *dir = dir_open_root ();
+  bool success = (dir != NULL
+                  && free_map_allocate (1, &inode_sector)
+                  && inode_create (inode_sector, initial_size)
+                  && dir_add (dir, name, inode_sector));
+  if (!success && inode_sector != 0) 
+    free_map_release (inode_sector, 1);
+  dir_close (dir);
+
+  return success;
+}
+
+struct file *filesys_abs_open (const char *abs_name);
+bool filesys_abs_remove (const char *abs_name);
+
+
 
 /* Formats the file system. */
 static void
