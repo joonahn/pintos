@@ -45,7 +45,7 @@ struct inode
 };
 
 bool file_growth(block_sector_t sector, off_t length);
-
+struct inode* get_inode_by_sector(block_sector_t sector);
 /* Returns the block device sector that contains byte offset POS
    within INODE.
    Returns -1 if INODE does not contain data for a byte at offset
@@ -109,11 +109,9 @@ bool file_growth(block_sector_t sector, off_t length)
 
   if (disk_inode != NULL)
   {
-    size_t start_sector = byte_to_sectors (disk_inode->length);
-    ASSERT(start_sector>=0);
+    off_t start_sector = bytes_to_sectors (disk_inode->length);
     disk_inode->length += length;
-    size_t last_sector = byte_to_sectors (disk_inode->length);
-    ASSERT(start_sector>=0);
+    off_t last_sector = bytes_to_sectors (disk_inode->length);
     size_t allocate_success = 1;
     size_t i, i_double;
     static char zeros[BLOCK_SECTOR_SIZE];
@@ -135,24 +133,23 @@ bool file_growth(block_sector_t sector, off_t length)
         block_sector_t *level1_data;
 
         /* Indicates where block of each level exists */
-        block_sector_t *level1_pos;
-        block_sector_t *level2_pos;
-        block_sector_t *level1_idx = i_double / 128;
-        block_sector_t *level2_idx = i_double - level1_idx * 128;
+        block_sector_t level1_pos;
+        block_sector_t level2_pos;
+        block_sector_t level1_idx = (block_sector_t)(i_double / 128);
+        block_sector_t level2_idx = (block_sector_t)(i_double % 128);
         /* Allocating root block */
         if(i_double == 0)
         {
-          allocate_success *= free_map_allocate(1, &disk_inode.double_indirect);
+          allocate_success *= free_map_allocate(1, &disk_inode->double_indirect);
           if(!allocate_success)
             break;
           block_write(fs_device, disk_inode->double_indirect, zeros);
-
         }
         /* Allocating first level block */
         if(i_double % 128 == 0)
         {
           block_read(fs_device, disk_inode->double_indirect, level0_data);
-          allocate_success *= free_map_allocate(1, level1_pos);
+          allocate_success *= free_map_allocate(1, &level1_pos);
           if(!allocate_success)
             break;
           level0_data[level1_idx] = level1_pos;
@@ -162,7 +159,7 @@ bool file_growth(block_sector_t sector, off_t length)
         block_read(fs_device, disk_inode->double_indirect, level0_data);
         level1_pos = level0_data[level1_idx];
         block_read(fs_device, level1_pos, level1_data);
-        allocate_success *= free_map_allocate(1, level2_pos);
+        allocate_success *= free_map_allocate(1, &level2_pos);
         if(!allocate_success)
           break;
         level1_data[level2_idx] = level2_pos;
@@ -212,6 +209,23 @@ inode_create (block_sector_t sector, off_t length)
     free (disk_inode);
   }
   return success;
+}
+
+
+  struct inode *
+get_inode_by_sector(block_sector_t sector)
+{
+  struct list_elem *e;
+  struct inode *inode;
+
+  for(e = list_begin (&open_inodes); e != list_end (&open_inodes);
+     e = list_next (e))
+  {
+    inode = list_entry (e, struct inode, elem);
+    if(inode->sector == sector)
+      return inode;
+  }
+  return NULL;
 }
 
 /* Reads an inode from SECTOR
@@ -288,10 +302,39 @@ inode_close (struct inode *inode)
     if (inode->removed) 
     {
       free_map_release (inode->sector, 1);
-      free_map_release (inode->data.start,
-          bytes_to_sectors (inode->data.length)); 
-    }
+      off_t i, i_double;
+      for(i = bytes_to_sectors(inode->data.length)-1; i > -1 ; i--)
+      {
+        if(i<DIRECT_SECTOR_NUM)
+          free_map_release(inode->data.direct[i],1);
+        else
+        {
+          i_double = i - 64;
+          block_sector_t *level0_data;
+          block_sector_t *level1_data;
 
+          block_sector_t level1_pos;
+          block_sector_t level2_pos;
+          block_sector_t level1_idx = (block_sector_t)(i_double / 128);
+          block_sector_t level2_idx = (block_sector_t)(i_double % 128);
+          block_read(fs_device, inode->data.double_indirect, level0_data);
+          level1_pos = level0_data[level1_idx];
+          block_read(fs_device, level1_pos, level1_data);
+          free_map_release(level2_pos,1);
+          level1_data[level2_idx] = 0;
+          block_write(fs_device, level1_pos, level1_data);
+          if(i_double % 128 == 0)
+          {
+            block_read(fs_device, inode->data.double_indirect, level0_data);
+            free_map_release(level1_pos,1);
+            level0_data[level1_idx] = 0;
+            block_write(fs_device, inode->data.double_indirect, level0_data);
+          }
+          if(i_double == 0)
+            free_map_release(inode->data.double_indirect,1);
+        }
+      }
+    }
     free (inode); 
   }
 }
@@ -330,7 +373,7 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
     int min_left = inode_left < sector_left ? inode_left : sector_left;
 
     /* Number of bytes to actually copy out of this sector. */
-    chunk_size = size < min_left ? size : min_left;
+    int chunk_size = size < min_left ? size : min_left;
     if (chunk_size <= 0)
       break;
 
