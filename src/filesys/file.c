@@ -71,6 +71,55 @@ file_read (struct file *file, void *buffer, off_t size)
   off_t bytes_read = inode_read_at (file->inode, buffer, size, file->pos);
   file->pos += bytes_read;
   return bytes_read;
+
+  // off_t remain_size = size;
+  // off_t bytes_read = 0;
+  // off_t offset = file->pos;
+  // uint8_t *bounce = NULL;
+  // // char buffer[512];
+
+  // while(remain_size > 0)
+  // {
+  //   block_sector_t sector_idx = byte_to_sector (file->inode, offset);
+  //   int sector_ofs = offset % BLOCK_SECTOR_SIZE;
+
+  //   /* Bytes left in inode, bytes left in sector, lesser of the two. */
+  //   off_t inode_left = inode_length (file->inode) - offset;
+  //   int sector_left = BLOCK_SECTOR_SIZE - sector_ofs;
+  //   int min_left = inode_left < sector_left ? inode_left : sector_left;
+
+  //   /* Number of bytes to actually copy out of this sector. */
+  //   int chunk_size = remain_size < min_left ? remain_size : min_left;
+  //   if (chunk_size <= 0)
+  //     break;
+
+  //   if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE)
+  //   {
+  //     /* Read full sector directly into caller's buffer. */
+  //     cache_block_read (sector_idx, buffer + bytes_read);
+  //   }
+  //   else 
+  //   {
+  //     /* Read sector into bounce buffer, then partially copy
+  //        into caller's buffer. */
+  //     if (bounce == NULL) 
+  //       {
+  //         bounce = malloc (BLOCK_SECTOR_SIZE);
+  //         if (bounce == NULL)
+  //           break;
+  //       }
+  //     cache_block_read (sector_idx, bounce);
+  //     memcpy (buffer + bytes_read, bounce + sector_ofs, chunk_size);
+  //   }
+
+  //   remain_size -= chunk_size;
+  //   offset += chunk_size;
+  //   bytes_read += chunk_size;
+  // }
+  // free (bounce);
+
+  // file->pos += bytes_read;
+  // return bytes_read;
 }
 
 /* Reads SIZE bytes from FILE into BUFFER,
@@ -97,6 +146,64 @@ file_write (struct file *file, const void *buffer, off_t size)
   off_t bytes_written = inode_write_at (file->inode, buffer, size, file->pos);
   file->pos += bytes_written;
   return bytes_written;
+
+  // off_t remain_size = size;
+  // off_t bytes_written = 0;
+  // off_t offset = file->pos;
+  // uint8_t *bounce = NULL;
+  // // char buffer[512];
+
+  // while(remain_size > 0)
+  // {
+  //   block_sector_t sector_idx = byte_to_sector (file->inode, offset);
+  //   int sector_ofs = offset % BLOCK_SECTOR_SIZE;
+
+  //   /* Bytes left in inode, bytes left in sector, lesser of the two. */
+  //   off_t inode_left = inode_length (file->inode) - offset;
+  //   int sector_left = BLOCK_SECTOR_SIZE - sector_ofs;
+  //   int min_left = inode_left < sector_left ? inode_left : sector_left;
+
+  //   /* Number of bytes to actually copy out of this sector. */
+  //   int chunk_size = remain_size < min_left ? remain_size : min_left;
+  //   if (chunk_size <= 0)
+  //     break;
+
+  //   if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE)
+  //   {
+  //     /* Read full sector directly into caller's buffer. */
+  //     cache_block_write (sector_idx, buffer + bytes_written);
+  //   }
+  //   else 
+  //   {
+  //     /* Read sector into bounce buffer, then partially copy
+  //        into caller's buffer. */
+  //     if (bounce == NULL) 
+  //       {
+  //         bounce = malloc (BLOCK_SECTOR_SIZE);
+  //         if (bounce == NULL)
+  //           break;
+  //       }
+
+  //     /* If the sector contains data before or after the chunk
+  //        we're writing, then we need to read in the sector
+  //        first.  Otherwise we start with a sector of all zeros. */
+  //     if (sector_ofs > 0 || chunk_size < sector_left) 
+  //       cache_block_read (sector_idx, bounce);
+  //     else
+  //       memset (bounce, 0, BLOCK_SECTOR_SIZE);
+  //     memcpy (bounce + sector_ofs, buffer + bytes_written, chunk_size);
+  //     cache_block_write (sector_idx, bounce);
+  //   }
+
+  //   remain_size -= chunk_size;
+  //   offset += chunk_size;
+  //   bytes_written += chunk_size;
+  // }
+  // free (bounce);
+
+  // file->pos += bytes_written;
+  // return bytes_written;
+
 }
 
 /* Writes SIZE bytes from BUFFER into FILE,
@@ -111,6 +218,63 @@ file_write_at (struct file *file, const void *buffer, off_t size,
                off_t file_ofs) 
 {
   return inode_write_at (file->inode, buffer, size, file_ofs);
+  
+  // off_t remain_size = size;
+  // off_t bytes_written = 0;
+  // off_t offset = file_ofs;
+  // uint8_t *bounce = NULL;
+  // // char buffer[512];
+
+  // while(remain_size > 0)
+  // {
+  //   block_sector_t sector_idx = byte_to_sector (file->inode, offset);
+  //   int sector_ofs = offset % BLOCK_SECTOR_SIZE;
+
+  //   /* Bytes left in inode, bytes left in sector, lesser of the two. */
+  //   off_t inode_left = inode_length (file->inode) - offset;
+  //   int sector_left = BLOCK_SECTOR_SIZE - sector_ofs;
+  //   int min_left = inode_left < sector_left ? inode_left : sector_left;
+
+  //   /* Number of bytes to actually copy out of this sector. */
+  //   int chunk_size = remain_size < min_left ? remain_size : min_left;
+  //   if (chunk_size <= 0)
+  //     break;
+
+  //   if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE)
+  //   {
+  //     /* Read full sector directly into caller's buffer. */
+  //     cache_block_write (sector_idx, buffer + bytes_written);
+  //   }
+  //   else 
+  //   {
+  //     /* Read sector into bounce buffer, then partially copy
+  //        into caller's buffer. */
+  //     if (bounce == NULL) 
+  //       {
+  //         bounce = malloc (BLOCK_SECTOR_SIZE);
+  //         if (bounce == NULL)
+  //           break;
+  //       }
+
+  //     /* If the sector contains data before or after the chunk
+  //        we're writing, then we need to read in the sector
+  //        first.  Otherwise we start with a sector of all zeros. */
+  //     if (sector_ofs > 0 || chunk_size < sector_left) 
+  //       cache_block_read (sector_idx, bounce);
+  //     else
+  //       memset (bounce, 0, BLOCK_SECTOR_SIZE);
+  //     memcpy (bounce + sector_ofs, buffer + bytes_written, chunk_size);
+  //     cache_block_write (sector_idx, bounce);
+  //   }
+
+  //   remain_size -= chunk_size;
+  //   offset += chunk_size;
+  //   bytes_written += chunk_size;
+  // }
+  // free (bounce);
+
+  // // file->pos += bytes_written;
+  // return bytes_written;
 }
 
 /* Prevents write operations on FILE's underlying inode
