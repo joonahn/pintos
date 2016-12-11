@@ -65,8 +65,8 @@ byte_to_sector (const struct inode *inode, off_t pos)
         block_sector_t pos_sector_double = pos_sector - DIRECT_SECTOR_NUM;
 
         /* Buffer for sector for each level */
-        block_sector_t *level0_data;
-        block_sector_t *level1_data;
+        block_sector_t *level0_data = malloc(BLOCK_SECTOR_SIZE);
+        block_sector_t *level1_data = malloc(BLOCK_SECTOR_SIZE);
 
         /* Indicates where block of each level exists */
         block_sector_t level1_pos;
@@ -99,7 +99,7 @@ inode_init (void)
 
 bool file_growth(block_sector_t sector, off_t length)
 {
-  struct inode_disk *disk_inode;
+  struct inode_disk *disk_inode = malloc(BLOCK_SECTOR_SIZE);
   bool success = false;
   block_read(fs_device, sector, disk_inode);
 
@@ -129,8 +129,8 @@ bool file_growth(block_sector_t sector, off_t length)
       {
         i_double = i - 64;
         /* Buffer for sector for each level */
-        block_sector_t *level0_data;
-        block_sector_t *level1_data;
+        block_sector_t *level0_data = malloc(BLOCK_SECTOR_SIZE);
+        block_sector_t *level1_data = malloc(BLOCK_SECTOR_SIZE);
 
         /* Indicates where block of each level exists */
         block_sector_t level1_pos;
@@ -254,6 +254,7 @@ inode_open (block_sector_t sector)
   if (inode == NULL)
     return NULL;
 
+  printf("\n----------inode adrs on push:%p--------\n", inode);
   /* Initialize. */
   list_push_front (&open_inodes, &inode->elem);
   inode->sector = sector;
@@ -295,6 +296,7 @@ inode_close (struct inode *inode)
   /* Release resources if this was the last opener. */
   if (--inode->open_cnt == 0)
   {
+    printf("-----------inode adrs on list remove:%p----------\n",inode);
     /* Remove from inode list and release lock. */
     list_remove (&inode->elem);
 
@@ -310,8 +312,8 @@ inode_close (struct inode *inode)
         else
         {
           i_double = i - 64;
-          block_sector_t *level0_data;
-          block_sector_t *level1_data;
+          block_sector_t *level0_data = malloc(BLOCK_SECTOR_SIZE);
+          block_sector_t *level1_data = malloc(BLOCK_SECTOR_SIZE);
 
           block_sector_t level1_pos;
           block_sector_t level2_pos;
