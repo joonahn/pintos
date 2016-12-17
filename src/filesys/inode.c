@@ -54,7 +54,7 @@ struct inode* get_inode_by_sector(block_sector_t sector);
 byte_to_sector (const struct inode *inode, off_t pos) 
 {
   ASSERT (inode != NULL);
-  if (pos < inode->data.length)
+  if (pos <= inode->data.length)
   {
     block_sector_t pos_sector = pos/BLOCK_SECTOR_SIZE;
       if(pos_sector < DIRECT_SECTOR_NUM)
@@ -203,6 +203,22 @@ inode_create (block_sector_t sector, off_t length)
   if (disk_inode != NULL)
   {
     disk_inode->length = 0;
+    /* Free map file is not target of file growth*/
+    if(sector == FREE_MAP_SECTOR)
+    {
+      off_t start_sector = 2;
+      disk_inode->length += length;
+      off_t last_sector = start_sector + length / BLOCK_SECTOR_SIZE;
+      size_t i;
+      static char zeros[BLOCK_SECTOR_SIZE];
+      /* Allocate block for free map file starting with sector number 2 */
+      for(i = start_sector; i< last_sector; i++)
+      {
+        ASSERT(free_map_allocate_explicit_sector(1,&disk_inode->direct[i-2], i));
+        ASSERT(disk_inode->direct[i-2]==i);
+        block_write(fs_device, i, zeros);
+      }
+    }
     disk_inode->magic = INODE_MAGIC;
     success = true;
     block_write(fs_device, sector, disk_inode); 
@@ -254,7 +270,6 @@ inode_open (block_sector_t sector)
   if (inode == NULL)
     return NULL;
 
-  printf("\n----------inode adrs on push:%p--------\n", inode);
   /* Initialize. */
   list_push_front (&open_inodes, &inode->elem);
   inode->sector = sector;
@@ -296,7 +311,6 @@ inode_close (struct inode *inode)
   /* Release resources if this was the last opener. */
   if (--inode->open_cnt == 0)
   {
-    printf("-----------inode adrs on list remove:%p----------\n",inode);
     /* Remove from inode list and release lock. */
     list_remove (&inode->elem);
 
@@ -424,13 +438,13 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
   if (inode->deny_write_cnt)
     return 0;
   if (inode_length(inode) < offset)
+  {
     file_growth(inode->sector, offset - inode_length(inode));
+    block_read(fs_device, inode->sector, &inode->data);
+  }
   while (size > 0) 
   {
-    /* Sector to write, starting byte offset within sector. */
-    block_sector_t sector_idx = byte_to_sector (inode, offset);
     int sector_ofs = offset % BLOCK_SECTOR_SIZE;
-
     /* Bytes left in inode, bytes left in sector, lesser of the two. */
     off_t inode_left = inode_length (inode) - offset;
     int sector_left = BLOCK_SECTOR_SIZE - sector_ofs;
@@ -438,8 +452,15 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
 
     /* Number of bytes to actually write into this sector. */
     if(size > min_left && min_left == inode_left)
+    {
       file_growth(inode->sector, size - min_left);
+      block_read(fs_device, inode->sector, &inode->data);
+    }
     int chunk_size = size;
+    
+    /* Sector to write, starting byte offset within sector. */
+    block_sector_t sector_idx = byte_to_sector (inode, offset);
+
     if (chunk_size <= 0)
       break;
 

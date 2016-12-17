@@ -1,0 +1,1000 @@
+ 1012  make check
+ 1013  make clean
+ 1014  make check
+ 1015  ls
+ 1016  make clean
+ 1017  ls
+ 1018  vim page.h
+ 1019  cd ../userprog/
+ 1020  cd -
+ 1021  vim frame.h
+ 1022  make clean
+ 1023  make check
+ 1024  cd ../../..
+ 1025  cd pintos/
+ 1026  la
+ 1027  git add *
+ 1028  git commit -m 
+ 1029  git commit -m "Basic frame table implementation"
+ 1030  git checkout
+ 1031  git branch
+ 1032  git push
+ 1033  l
+ 1034  cd src/userprog/
+ 1035  vim process.c
+ 1036  exit
+ 1037  ls
+ 1038  cd marx/
+ 1039  cd pintos/src/
+ 1040  cd userprog/
+ 1041  vim process.c
+ 1042  cd ../vm/build/
+ 1043  l
+ 1044  backtrace kernel.o 0xc0028752
+ 1045  cd -
+ 1046  vim process.c
+ 1047  vim exception.c
+ 1048  vim process.c
+ 1049  cd ../threads/
+ 1050  vim init.c
+ 1051  cd -
+ 1052  vim process.c
+ 1053  cd ../..
+ 1054  ls
+ 1055  cd src/
+ 1056  ls
+ 1057  cd lib/
+ 1058  ls
+ 1059  cd user/
+ 1060  ls
+ 1061  cd ..
+ 1062  cd kernel/
+ 1063  vim hash.h
+ 1064  exit
+ 1065  ls
+ 1066  cd marx/pintos/src/threads/
+ 1067  vim thread.h
+ 1068  cd ../lib/kernel/
+ 1069  vim hash.h
+ 1070  cd -
+ 1071  cd ../vm
+ 1072  make clean
+ 1073  make
+ 1074  make 
+ 1075  make
+ 1076  ls
+ 1077  cd ..
+ 1078  cd lib/kernel/
+ 1079  vim hash.h
+ 1080  cd -
+ 1081  cd vm
+ 1082  vim ../threads/thread.h
+ 1083  vim ../lib/kernel/hash.h
+ 1084  vim ../threads/thread.h
+ 1085  make
+ 1086  make clean
+ 1087  exit
+ 1088  ls
+ 1089  cd marx/pintos/src/
+ 1090  ls
+ 1091  cd userprog/
+ 1092  ls
+ 1093  vim process.c
+ 1094  vim pagedir.h
+ 1095  cd ..
+ 1096  grep -nr "pagedir_set_page" .
+ 1097  cd userprog/
+ 1098  vim process.c
+ 1099  vim pagedir.h
+ 1100  ls
+ 1101  vim process.c
+ 1102  cd ../vm
+ 1103  cd ../lib/kernel/
+ 1104  vim hash.h
+ 1105  cd -
+ 1106  ls
+ 1107  vim page.h
+ 1108  exit;exit
+ 1109  ls
+ 1110  cd marx/pintos/src/
+ 1111  ls
+ 1112  cd userprog/
+ 1113  cd ..
+ 1114  cd userprog/
+ 1115  ls
+ 1116  vim exception.h
+ 1117  vim exception.c
+ 1118  cd ..
+ 1119  grep -nr "page_fault"
+ 1120  grep -nr "page_fault" .
+ 1121  cd -
+ 1122  vim exception.c
+ 1123  vim process.c
+ 1124  ls
+ 1125  cd ../vm/
+ 1126  vim page.h
+ 1127  cd ..
+ 1128  ctags -R
+ 1129  cd -
+ 1130  vim page.h
+ 1131  cd ..
+ 1132  ctags -R
+ 1133  cd vm
+ 1134  make
+ 1135  vim page.c
+ 1136  make
+ 1137  vim page.c
+ 1138  make
+ 1139  vim page.c
+ 1140  make
+ 1141  vim page.c
+ 1142  make
+ 1143  cd ..
+ 1144  la
+ 1145  cd ..
+ 1146  la
+ 1147  git add .
+ 1148  git commit -m "Basic implementation of Supplement page table. page fault handling to go"
+ 1149  git push
+ 1150  git branch
+ 1151  git push
+ 1152  ls
+ 1153  cd src/userprog/
+ 1154  vim process.c
+ 1155  cd ../devices/
+ 1156  vim block.h
+ 1157  cd ..
+ 1158  grep -nr "block_read" .
+ 1159  cd filesys/
+ 1160  vim inode.c
+ 1161  cd ..
+ 1162  grep -nr "SWAP_BLOCK" .
+ 1163  grep -nr "BLOCK_SWAP" .
+ 1164  cd threads/
+ 1165  vim init.c
+ 1166  cd ..
+ 1167  grep -nr "block_by_role" .
+ 1168  cd -
+ 1169  cd devices/
+ 1170  vim block.h
+ 1171  cd ..
+ 1172  grep -nr "block_set_role" .
+ 1173  cd threads/
+ 1174  vim init.c
+ 1175  cd .
+ 1176  cd ..
+ 1177  cd lib/kernel/
+ 1178  vim bitmap.h
+ 1179  cd ../..
+ 1180  grep -nr "slot" .
+ 1181  cd filesys/
+ 1182  vim directory.c
+ 1183  cd ../..
+ 1184  cd src/userprog/
+ 1185  vim process.c
+ 1186  cd ../
+ 1187  cd lib/kernel/
+ 1188  vim bitmap.h
+ 1189  cd marx/pintos/
+ 1190  cd src/lib/kernel/
+ 1191  la
+ 1192  rm .bitmap.h.swp 
+ 1193  ls
+ 1194  cd ../../vm/
+ 1195  vim page.c
+ 1196  vim page.h
+ 1197  -
+ 1198  cd -
+ 1199  vim bitmap.h
+ 1200  cd ../../..
+ 1201  cd src/
+ 1202  vim Make
+ 1203  vim Makefile
+ 1204  cd ..
+ 1205  ls
+ 1206  cd src/
+ 1207  vim Makefile.kernel 
+ 1208  vim Makefile.build 
+ 1209  cd userprog/
+ 1210  vim exception.c
+ 1211  vim process..c
+ 1212  vim process.c
+ 1213  cd ..
+ 1214  cd threads/
+ 1215  ls
+ 1216  vim thread.h
+ 1217  vim thread.c
+ 1218  cd ../userprog/
+ 1219  ls
+ 1220  cd ..
+ 1221  cd threads/
+ 1222  vim interrupt.h
+ 1223  cd marx/pintos/
+ 1224  cd src/
+ 1225  cd userprog/
+ 1226  la
+ 1227  cd ..
+ 1228  ls
+ 1229  cd src/vm/
+ 1230  make clean
+ 1231  make
+ 1232  make check
+ 1233  ls
+ 1234  cd ..
+ 1235  cd tests/
+ 1236  s
+ 1237  ls
+ 1238  cd vm
+ 1239  ls
+ 1240  vim pt-grow-stack.c
+ 1241  ls
+ 1242  cd ../...
+ 1243  cd ..
+ 1244  vim Makefile.kernel 
+ 1245  vim Make.config 
+ 1246  vim Makefile
+ 1247  grep -nr "check" .
+ 1248  grep -nr "check:" .
+ 1249  vim Makefile.kernel 
+ 1250  cd vm/
+ 1251  ls
+ 1252  cd build/
+ 1253  la
+ 1254  vim Makefile 
+ 1255  cd ..
+ 1256  la
+ 1257  vim Makefile 
+ 1258  vim Make.vars 
+ 1259  exit
+ 1260  cd marx/
+ 1261  ls
+ 1262  la
+ 1263  cd pintos/
+ 1264  ls
+ 1265  lsla
+ 1266  la
+ 1267  ls
+ 1268  la
+ 1269  git pull
+ 1270  ls
+ 1271  cd src/
+ 1272  ls
+ 1273  cd userprog/
+ 1274  ls
+ 1275  vim process.c
+ 1276  cat process.c | less
+ 1277  cat process.c
+ 1278  cat process.c | less
+ 1279  cat process.c | more
+ 1280  clear
+ 1281  man top
+ 1282  top
+ 1283  cd ../
+ 1284  cd userprog/
+ 1285  vim pagedir.h
+ 1286  clear
+ 1287  cd ../filesys/
+ 1288  ls
+ 1289  vim inode.h
+ 1290  exit
+ 1291  cd marx/
+ 1292  ls
+ 1293  la
+ 1294  cd pintos/
+ 1295  la
+ 1296  git pull
+ 1297  ls
+ 1298  cd src/userprog/
+ 1299  ls
+ 1300  cd ..
+ 1301  cd vm
+ 1302  vim swap.h
+ 1303  cd ../
+ 1304  ctags -R
+ 1305  cd vm/
+ 1306  vim swap.h
+ 1307  vim frame.h
+ 1308  cd ../userprog/
+ 1309  vim pagedir.h
+ 1310  cd -
+ 1311  vim frame.h
+ 1312  cd ..
+ 1313  git stash
+ 1314  cd src/
+ 1315  git stash
+ 1316  cd vm/
+ 1317  vim frame.c
+ 1318  vim swap.c
+ 1319  ls
+ 1320  cd ..
+ 1321  cd vm/
+ 1322  cd ..
+ 1323  ls
+ 1324  cd tests/
+ 1325  cd vm/
+ 1326  ls
+ 1327  vim page-parallel.c
+ 1328  ls
+ 1329  cd pintos
+ 1330  ls
+ 1331  cd src
+ 1332  cd vm
+ 1333  ls
+ 1334  make
+ 1335  ls
+ 1336  cd build/tests/vm
+ 1337  ls | grep zero
+ 1338  ls
+ 1339  ls | grep mmap-overlap
+ 1340  la | grep zero
+ 1341  cd ..
+ 1342  ls
+ 1343  cd ..
+ 1344  tree | grep zero
+ 1345  cd ..
+ 1346  cd /
+ 1347  la
+ 1348  ll
+ 1349  ls -r
+ 1350  tree
+ 1351  els
+ 1352  ls
+ 1353  cd ~
+ 1354  ls
+ 1355  ll
+ 1356  cd tree-1.7.0/
+ 1357  ls
+ 1358  pwd
+ 1359  cd /
+ 1360  ~/tree-1.7.0/tree 
+ 1361  ~/tree-1.7.0/tree > ~/this_is_cena
+ 1362  cd ~
+ 1363  vim this_is_cena 
+ 1364  cat this_is_cena | grep cena
+ 1365  cat this_is_cena | grep zero
+ 1366  cat this_is_cena | grep zeros
+ 1367  ls
+ 1368  exit
+ 1369  arch
+ 1370  uname -a
+ 1371  lscpu
+ 1372  hostnamectl
+ 1373  cat /proc/cpuinfo
+ 1374  df -T
+ 1375  df -hT
+ 1376  clear
+ 1377  telnet 
+ 1378  telnet blinkenlights.nl
+ 1379  exit
+ 1380  ls
+ 1381  mkdir dsdssd
+ 1382  cd dsdssd/
+ 1383  git clone https://github.com/joonahn/pintos.git
+ 1384  ls
+ 1385  git clone https://github.com/joonahn/pintos.git
+ 1386  cd pintos/
+ 1387  cd src/
+ 1388  ls
+ 1389  cd vm/
+ 1390  ls
+ 1391  make check
+ 1392  pwd
+ 1393  ls
+ 1394  which pintos
+ 1395  vim /home/os16/.bashrc
+ 1396  source ~/.bashrc 
+ 1397  make check
+ 1398  cd ..
+ 1399  rm -rf pintos/
+ 1400  git clone https://github.com/joonahn/pintos.git
+ 1401  git branch 
+ 1402  git checkout 
+ 1403  cd pintos/
+ 1404  git branch 
+ 1405  git checkout
+ 1406  git branch 
+ 1407  ls
+ 1408  git checkout -b
+ 1409  git checkout -b proj3
+ 1410  ls
+ 1411  cd src/
+ 1412  cd ..
+ 1413  rm -rf dsdssd/
+ 1414  mkdir higolden
+ 1415  cd higolden/
+ 1416  git clone https://github.com/joonahn/pintos.git
+ 1417  git fetch
+ 1418  la
+ 1419  cd pintos/p
+ 1420  cd pintos/
+ 1421  git fetch
+ 1422  ls
+ 1423  a
+ 1424  la
+ 1425  git branch 
+ 1426  git checkout 
+ 1427  git branch 
+ 1428  git checkout proj3
+ 1429  git branch 
+ 1430  git pull
+ 1431  cd ..
+ 1432  rm -rf pintos/
+ 1433  git clone https://github.com/joonahn/pintos.git
+ 1434  git branch -r
+ 1435  cd pintos/
+ 1436  git branch -r
+ 1437  git branch 
+ 1438  git branch -r
+ 1439  git checkout origin/proj3 
+ 1440  git branch 
+ 1441  git checkout -t origin/proj3 
+ 1442  git branch 
+ 1443  git pull
+ 1444  ls
+ 1445  cd src/
+ 1446  cd userprog/
+ 1447  ls
+ 1448  cd ..
+ 1449  cd threads/
+ 1450  ls
+ 1451  vim pte.h
+ 1452  cd ..
+ 1453  cd userprog/
+ 1454  vim pagedir.c
+ 1455  vim pagedir.h
+ 1456  cd ..
+ 1457  grep -nr 
+ 1458  grep -nr "USER_BASE"
+ 1459  grep -nr "USER_BASE" .
+ 1460  cd userprog/
+ 1461  vim process.h
+ 1462  cd ../vm/
+ 1463  make check
+ 1464  vim /home/os16/.bashrc
+ 1465  make check
+ 1466  source ~/.bashrc
+ 1467  make check
+ 1468  vim /home/os16/.bashrc
+ 1469  source ~/.bashrc
+ 1470  make check
+ 1471  ls
+ 1472  cd ..
+ 1473  cd vm
+ 1474  make clean
+ 1475  make
+ 1476  make check
+ 1477  cd ..
+ 1478  ls
+ 1479  cd utils/
+ 1480  ls
+ 1481  ll
+ 1482  chmod +x pintos
+ 1483  cd ../vm/
+ 1484  make check
+ 1485  make clean
+ 1486  make check
+ 1487  cd ..
+ 1488  ls
+ 1489  la
+ 1490  ls
+ 1491  mv pintos .pintos_cena
+ 1492  ls
+ 1493  cd higolden/
+ 1494  ls
+ 1495  mv pintos/ ../pintos
+ 1496  ls
+ 1497  cd
+ 1498  rm -rf higolden/
+ 1499  cd pintos/
+ 1500  ls
+ 1501  cd src/
+ 1502  cd vm/
+ 1503  ls
+ 1504  make check
+ 1505  make clean
+ 1506  make check
+ 1507  ls
+ 1508  vim /home/os16/.bashrc
+ 1509  source ~/.bashrc
+ 1510  make check
+ 1511  make clean
+ 1512  make check
+ 1513  ls
+ 1514  cd .
+ 1515  cd ..
+ 1516  ls
+ 1517  cd ..
+ 1518  l
+ 1519  cd src/vm/
+ 1520  ls
+ 1521  vim frame.h
+ 1522  vim /home/os16/.vimrc
+ 1523  vim frame.h
+ 1524  vim /home/os16/.vimrc
+ 1525  cd ..
+ 1526  ctags -R
+ 1527  cd -
+ 1528  vim frame.h
+ 1529  vim page.h
+ 1530  vim ../userprog/
+ 1531  vim ../userprog/syscall.c
+ 1532  vim swap.h
+ 1533  ls
+ 1534  cd ..
+ 1535  grep -nr "timeout" .
+ 1536  ls
+ 1537  cd -
+ 1538  vim swap.h
+ 1539  pong
+ 1540  moo
+ 1541  sudo hi
+ 1542  sudo 
+ 1543  sudo apt-get moo
+ 1544  cd ../
+ 1545  cd ..
+ 1546  ls
+ 1547  cd ..
+ 1548  ls
+ 1549  la
+ 1550  ll
+ 1551  vim this_is_cena 
+ 1552  exit
+ 1553  telnet towel.blinkenlights.nl
+ 1554  cd pintos
+ 1555  ls
+ 1556  cd src
+ 1557  ls
+ 1558  cd vm
+ 1559  ls
+ 1560  make grade
+ 1561  chmod 700 ../tests/make-grade 
+ 1562  make grade
+ 1563  ls
+ 1564  rm build/grade 
+ 1565  make grade
+ 1566  less grade
+ 1567  less build/grade
+ 1568  exitr
+ 1569  exit
+ 1570  ls
+ 1571  cd pintos/
+ 1572  cd src/
+ 1573  ls
+ 1574  cd filesys/
+ 1575  ls
+ 1576  vim Make.vars 
+ 1577  make check
+ 1578  cd ..
+ 1579  cd vm/
+ 1580  ls
+ 1581  vim Make.vars 
+ 1582  vim Makefile 
+ 1583  vim Make.vars 
+ 1584  cd ../filesys/
+ 1585  vim Make.vars 
+ 1586  make check
+ 1587  ls
+ 1588  cd ..
+ 1589  ls
+ 1590  cd u
+ 1591  cd tu
+ 1592  cd utils/
+ 1593  ls
+ 1594  ll
+ 1595  cd ..
+ 1596  ls
+ 1597  cd filesys/
+ 1598  ls
+ 1599  make clean
+ 1600  make
+ 1601  make check
+ 1602  vim /home/os16/.bashrc
+ 1603  pwd
+ 1604  which pintos
+ 1605  pwd
+ 1606  vim /home/os16/.bashrc
+ 1607  cd build/
+ 1608  cd tests/userprog/
+ 1609  ls
+ 1610  cd ..
+ 1611  make clean
+ 1612  make check
+ 1613  source ~/.bashrc
+ 1614  make check
+ 1615  ls
+ 1616  make clean
+ 1617  ll
+ 1618  chmod +x a.out 
+ 1619  ./a.out 
+ 1620  chmod -x a.out 
+ 1621  ll
+ 1622  ././
+ 1623  ./
+ 1624  ls
+ 1625  pintos
+ 1626  make check
+ 1627  ls
+ 1628  vim Makefile 
+ 1629  vim Make.vars 
+ 1630  make clean
+ 1631  make cehck
+ 1632  make check
+ 1633  vim Make.vars 
+ 1634  make check
+ 1635  make clean
+ 1636  cd ../utils/
+ 1637  ls
+ 1638  ll
+ 1639  chmod +x pintos-mkdisk 
+ 1640  cd -
+ 1641  l
+ 1642  make check
+ 1643  ls
+ 1644  exit
+ 1645  ls
+ 1646  vim marx
+ 1647  df -T
+ 1648  exit
+ 1649  ll
+ 1650  vim .JOHN/
+ 1651  exit
+ 1652  ls
+ 1653  cd pintos/
+ 1654  ls
+ 1655  cd src/
+ 1656  ls
+ 1657  cd filesys/
+ 1658  ls
+ 1659  vim inode.h
+ 1660  vim inode.c
+ 1661  cd ..
+ 1662  ls
+ 1663  cd userprog/
+ 1664  ls
+ 1665  vim process.c
+ 1666  cd ..
+ 1667  cd filesys/
+ 1668  ls
+ 1669  vim filesys.h
+ 1670  exit
+ 1671  ls
+ 1672  cd pintos/
+ 1673  ls
+ 1674  cd src/
+ 1675  cd filesys/
+ 1676  ls
+ 1677  vim inode.h
+ 1678  vim inode.c
+ 1679  cd ../devices/
+ 1680  vim block.c
+ 1681  cd -
+ 1682  vim inode.c
+ 1683  vim file.c
+ 1684  cd ~
+ 1685  ls
+ 1686  la
+ 1687  mv marx/ .marx
+ 1688  la
+ 1689  ls
+ 1690  mkdir stalin
+ 1691  ls
+ 1692  cd stalin/
+ 1693  git clone https://github.com/joonahn/pintos.git
+ 1694  ls
+ 1695  git branch 
+ 1696  cd pintos/
+ 1697  git branch 
+ 1698  git branch extensive
+ 1699  git checkout extensive
+ 1700  git branch 
+ 1701  git commit -m "new branch for extensive files"
+ 1702  ls
+ 1703  cd src/
+ 1704  ls
+ 1705  vim threads/thread.c
+ 1706  cd ..
+ 1707  cd pintos/
+ 1708  git add .
+ 1709  git commit -m "new branch for extensive files"
+ 1710  git push
+ 1711  git branch -r
+ 1712  git branch -a
+ 1713  git push origin extensive
+ 1714  git branch -r
+ 1715  git branch -a
+ 1716  git branch
+ 1717  ls
+ 1718  git branch -r
+ 1719  git checkout origin/extensive 
+ 1720  git branch 
+ 1721  git branch -r
+ 1722  git branch -a
+ 1723  git checkout remotes/origin/extensive
+ 1724  git branch 
+ 1725  git branch -a
+ 1726  git checkout -b extensive origin/extensive
+ 1727  git checkout extensive origin/extensive
+ 1728  git branch -d extensive 
+ 1729  git checkout extensive origin/extensive
+ 1730  git checkout -b extensive origin/extensive
+ 1731  git branch 
+ 1732  git branch -r
+ 1733  git branch -a
+ 1734  ls
+ 1735  touch dummy
+ 1736  ls
+ 1737  git add .
+ 1738  git commit -m "dummy commit"
+ 1739  git push
+ 1740  rm dummy 
+ 1741  git commit -m "dummy erasesd"
+ 1742  git push
+ 1743  git add .
+ 1744  ls
+ 1745  git commit -m "dummy erasesd"
+ 1746  git status
+ 1747  git rm dummy
+ 1748  git commit -m "dummy erasesd"
+ 1749  git push
+ 1750  ls
+ 1751  cd src/
+ 1752  ls
+ 1753  cd filesys/
+ 1754  ls
+ 1755  vim inode.h
+ 1756  ls
+ 1757  cd stalin/
+ 1758  cd pintos/
+ 1759  ls
+ 1760  mv src/ ../
+ 1761  ls
+ 1762  ll
+ 1763  la
+ 1764  cd ..
+ 1765  ls
+ 1766  mv src/ pintos/
+ 1767  ls
+ 1768  cd pintos/
+ 1769  ls
+ 1770  cd src/
+ 1771  ls
+ 1772  cd filesys/
+ 1773  vim inode.c
+ 1774  la
+ 1775  rm .inode.c.swp 
+ 1776  vim inode.c
+ 1777  ls
+ 1778  vim filesys.h
+ 1779  vim filesys.c
+ 1780  exit
+ 1781  ls
+ 1782  cd stalin/
+ 1783  cd pintos/src/filesys/
+ 1784  vim filesys.c
+ 1785  vim file.c
+ 1786  vim filesys.c
+ 1787  vim inode.c
+ 1788  exit
+ 1789  ls
+ 1790  cd stalin/pintos/src/
+ 1791  cd filesys/
+ 1792  vim file.c
+ 1793  vim filesys.c
+ 1794  vim inode.c
+ 1795  exit
+ 1796  cd stalin/pintos/src/filesys/
+ 1797  vim inode.c
+ 1798  cd stalin/pintos/src/filesys/
+ 1799  ls
+ 1800  do-release-upgrade 
+ 1801  cd ..
+ 1802  ls
+ 1803  cd -
+ 1804  ls
+ 1805  ll
+ 1806  la
+ 1807  vim filesys.c
+ 1808  vim inode.c
+ 1809  la
+ 1810  rm .inode.c.swp 
+ 1811  vim inode.c
+ 1812  cd ~
+ 1813  mkdir a/b/c
+ 1814  mkdir a/
+ 1815  mkdir a/b\
+ 1816  mkdir a/b
+ 1817  mkdir a/b/c
+ 1818  ls
+ 1819  cd a
+ 1820  ls
+ 1821  cdb
+ 1822  ls
+ 1823  cd stalin/
+ 1824  ls
+ 1825  cd pintos/
+ 1826  ls
+ 1827  cd src/filesys/
+ 1828  ls
+ 1829  vim inode.c
+ 1830  cd stalin/pintos/src/filesys/
+ 1831  ls
+ 1832  la
+ 1833  vim .inode.c.swp 
+ 1834  vim inode.c
+ 1835  vim -r inode.c
+ 1836  rm .inode.c.swp 
+ 1837  vim inode.c
+ 1838  cd ../../..
+ 1839  la
+ 1840  cdp
+ 1841  cd pintos/
+ 1842  la
+ 1843  git commit -m "in case of fire"
+ 1844  git add .
+ 1845  git commit -m "in case of fire"
+ 1846  git push
+ 1847  exit
+ 1848  ls
+ 1849  cd stalin/
+ 1850  ls
+ 1851  cd pintos/src/filesys/
+ 1852  ls
+ 1853  vim inode.c
+ 1854  cd /
+ 1855  cd ..
+ 1856  cd ../.././
+ 1857  l
+ 1858  ll
+ 1859  ls -l
+ 1860  la
+ 1861  vim .bashrc
+ 1862  vim ~/.bashrc
+ 1863  cd ~
+ 1864  ls
+ 1865  exit
+ 1866  ls
+ 1867  cd stalin/pintos/src/filesys/
+ 1868  vim inode.c
+ 1869  cd build/tests/userprog/
+ 1870  vim args-none.output 
+ 1871  cd ../..
+ 1872  backtrace kernel.o 0xc00286ae
+ 1873  cd -
+ 1874  backtrace tests/userprog/args-none 0x202
+ 1875  cd ../../threads/
+ 1876  vim io.h 
+ 1877  cd stalin/pintos/src/filesys/
+ 1878  pintos-gdb kernel.o
+ 1879  cd build/
+ 1880  pintos-gdb kernel.o
+ 1881  cd ..
+ 1882  la
+ 1883  git commit -m "debug needed"
+ 1884  git add .
+ 1885  git commit -m "debug needed"
+ 1886  git push
+ 1887  exit
+ 1888  cd stalin/pintos/src/filesys/
+ 1889  vim inode.c
+ 1890  make check
+ 1891  vim inode.c
+ 1892  exit
+ 1893  cd stalin/pintos/src/filesys/
+ 1894  vim -r inode.c
+ 1895  cd ../userprog/
+ 1896  vim syscall.c
+ 1897  vim -
+ 1898  cd -
+ 1899  vim inode.c
+ 1900  make
+ 1901  vim inode.c
+ 1902  make
+ 1903  vim inode.c
+ 1904  cd ..
+ 1905  ls
+ 1906  cd src/
+ 1907  ctags -R
+ 1908  ls
+ 1909  git commit -m "in case of fire2"
+ 1910  git status
+ 1911  git add .
+ 1912  git commit -m "in case of fire2"
+ 1913  git push
+ 1914  ls
+ 1915  cd filesys/
+ 1916  ls
+ 1917  vim inode.c
+ 1918  cd ..
+ 1919  pwd
+ 1920  vim /home/os16/.bashrc
+ 1921  vim /home/os16/.vimrc
+ 1922  vim /home/os16/.bashrc
+ 1923  cd utils/
+ 1924  ls
+ 1925  cd ..
+ 1926  ls
+ 1927  cd filesys/
+ 1928  ls
+ 1929  vim inode.c
+ 1930  make
+ 1931  ls
+ 1932  vim inode.c
+ 1933  make
+ 1934  vim inode.c
+ 1935  make
+ 1936  vim inode.c
+ 1937  make
+ 1938  vim inode.c
+ 1939  make
+ 1940  vim inode.c
+ 1941  make
+ 1942  vim inode.c
+ 1943  make
+ 1944  vim inode.c
+ 1945  make
+ 1946  vim inode.c
+ 1947  make
+ 1948  vim inode.c
+ 1949  make
+ 1950  vim inode.c
+ 1951  make
+ 1952  vim inode.c
+ 1953  make
+ 1954  make check
+ 1955  cd build/
+ 1956  backtrace kernel.o 0xc00286ae
+ 1957  source ~/.bashrc
+ 1958  vim ~/.bachrc
+ 1959  vim ~/.bashrc
+ 1960  backtrace kernel.o 0xc00286ae
+ 1961  cd ..
+ 1962  vim inode.c
+ 1963  vim ../lib/kernel/list.c
+ 1964  vim inode.c
+ 1965  cd ..
+ 1966  cd utils/
+ 1967  ll
+ 1968  chmod +x pintos-gdb 
+ 1969  cd ..
+ 1970  git commit -m "commpile done debugging starts"
+ 1971  git add .
+ 1972  git commit -m "commpile done debugging starts"
+ 1973  git push
+ 1974  cd filesys/
+ 1975  vim inode.c
+ 1976  make check
+ 1977  cd build/tests/filesys/
+ 1978  ls
+ 1979  cd ..
+ 1980  cd userprog/
+ 1981  ls
+ 1982  vim args-none.output 
+ 1983  cd ..
+ 1984  vim inode.c
+ 1985  make check
+ 1986  cd build/tests/userprog/
+ 1987  vim args-none.output 
+ 1988  cd -
+ 1989  pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/args-none -a args-none -- -q  -f run args-none < /dev/null 2> tests/userprog/args-none.errors > tests/userprog/args-none.output
+ 1990  cd build/
+ 1991  pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/args-none -a --gdb args-none -- -q  -f run args-none < /dev/null 2> tests/userprog/args-none.errors > tests/userprog/args-none.output
+ 1992  pintos-gdb kernel.o
+ 1993  pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/args-none -a --gdb args-none -- -q  -f run args-none < /dev/null 2> tests/userprog/args-none.errors > tests/userprog/args-none.output
+ 1994  pintos --gdb -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/args-none -a args-none -- -q  -f run args-none < /dev/null 2> tests/userprog/args-none.errors > tests/userprog/args-none.output
+ 1995  cd tests/userprog/
+ 1996  vim args-none.output 
+ 1997  cd -
+ 1998  pintos --gdb -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/args-none -a args-none -- -q  -f run args-none < /dev/null 2> tests/userprog/args-none.errors > tests/userprog/args-none.output
+ 1999  exi
+ 2000  exit
+ 2001  ls
+ 2002  cdsdffdfadsfadsfdfdsf;
+ 2003  cd stalin/
+ 2004  cd pintos/src/
+ 2005  ls
+ 2006  cd filesys/
+ 2007  vim
+ 2008  ls
+ 2009  vim inode.c
+ 2010  ls
+ 2011  history > history.txt

@@ -112,7 +112,7 @@ lookup (const struct dir *dir, const char *name,
           *ofsp = ofs;
         return true;
       }
-    }
+  }
   return false;
 }
 
