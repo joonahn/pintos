@@ -18,11 +18,10 @@ struct inode_disk
 {
   off_t length;                       /* File size in bytes. */
   unsigned magic;                     /* Magic number. */
-  char file_name[16];
-  char full_path[128];
+  unsigned is_dir;                    /* Check if inode is directory */
   block_sector_t direct[DIRECT_SECTOR_NUM];
   block_sector_t double_indirect;
-  uint32_t unused[25];               /* Not used. */
+  uint32_t unused[60];               /* Not used. */
 };
 
 /* Returns the number of sectors to allocate for an inode SIZE
@@ -192,6 +191,7 @@ inode_create (block_sector_t sector, off_t length)
 {
   struct inode_disk *disk_inode = NULL;
   bool success = false;
+  bool growth =  false;
 
   ASSERT (length >= 0);
 
@@ -219,9 +219,18 @@ inode_create (block_sector_t sector, off_t length)
         block_write(fs_device, i, zeros);
       }
     }
+    else
+    {
+      //struct inode* inode = get_inode_by_sector(sector);
+      //file_growth(sector, length);
+      growth = true;
+      //block_read(fs_device, inode->sector, &inode->data);
+    }
     disk_inode->magic = INODE_MAGIC;
     success = true;
     block_write(fs_device, sector, disk_inode); 
+    if(growth)
+      file_growth(sector, length);
     free (disk_inode);
   }
   return success;
@@ -460,7 +469,6 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
     
     /* Sector to write, starting byte offset within sector. */
     block_sector_t sector_idx = byte_to_sector (inode, offset);
-
     if (chunk_size <= 0)
       break;
 
@@ -487,8 +495,10 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
       else
         memset (bounce, 0, BLOCK_SECTOR_SIZE);
       memcpy (bounce + sector_ofs, buffer + bytes_written, chunk_size);
+      //printf("fs_device: %p, sector_idx:%d, bounce:%p\n",fs_device, sector_idx, bounce);
       block_write (fs_device, sector_idx, bounce);
     }
+    //printf("assurance\n");
 
     /* Advance. */
     size -= chunk_size;

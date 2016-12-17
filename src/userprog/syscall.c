@@ -214,7 +214,6 @@ int write (int _fd, const void *buffer, unsigned size)
   struct thread *cur = thread_current ();
   if(get_virtual_addr(buffer) == 0)
     exit(-1);
-
   if(_fd==1)
   {
     putbuf(buffer, size);
