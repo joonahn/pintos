@@ -137,7 +137,9 @@ bool file_growth(block_sector_t sector, off_t length)
     off_t last_sector = bytes_to_sectors (disk_inode->length);
     size_t allocate_success = 1;
     size_t i, i_double;
-    char* zeros= calloc(1,BLOCK_SECTOR_SIZE);
+    char* zeros=NULL;
+    zeros = malloc(BLOCK_SECTOR_SIZE);
+    memset(zeros, 0, BLOCK_SECTOR_SIZE);
     //static char zeros[BLOCK_SECTOR_SIZE];
     for(i = start_sector; i < last_sector; i++)
     {
@@ -244,7 +246,8 @@ inode_create (block_sector_t sector, off_t length)
       off_t last_sector = start_sector + length / BLOCK_SECTOR_SIZE;
       size_t i;
       char* zeros;
-      zeros = calloc(1,BLOCK_SECTOR_SIZE);
+      zeros = malloc(BLOCK_SECTOR_SIZE);
+      memset (zeros, 0, BLOCK_SECTOR_SIZE);
       /* Allocate block for free map file starting with sector number 2 */
       for(i = start_sector; i< last_sector; i++)
       {

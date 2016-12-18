@@ -122,10 +122,10 @@ kill (struct intr_frame *f)
 static void
 page_fault (struct intr_frame *f) 
 {
-  bool not_present;  /* True: not-present page, false: writing r/o page. */
-  bool write;        /* True: access was write, false: access was read. */
-  bool user;         /* True: access by user, false: access by kernel. */
-  void *fault_addr;  /* Fault address. */
+  volatile bool not_present;  /* True: not-present page, false: writing r/o page. */
+  volatile bool write;        /* True: access was write, false: access was read. */
+  volatile bool user;         /* True: access by user, false: access by kernel. */
+  volatile void *fault_addr;  /* Fault address. */
 
   /* Obtain faulting address, the virtual address that was
      accessed to cause the fault.  It may point to code or to
@@ -136,9 +136,13 @@ page_fault (struct intr_frame *f)
      (#PF)". */
   asm ("movl %%cr2, %0" : "=r" (fault_addr));
 
+
   /* Turn interrupts back on (they were only off so that we could
      be assured of reading CR2 before it changed). */
   intr_enable ();
+
+
+  printf("faulted_adr:%p\n",fault_addr);
 
   /* Count page faults. */
   page_fault_cnt++;
