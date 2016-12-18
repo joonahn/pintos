@@ -15,10 +15,13 @@
    Must be exactly BLOCK_SECTOR_SIZE bytes long. */
 struct inode_disk
   {
-    block_sector_t start;               /* First data sector. */
+    block_sector_t start;
     off_t length;                       /* File size in bytes. */
     unsigned magic;                     /* Magic number. */
-    uint32_t unused[125];               /* Not used. */
+    unsigned is_dir;
+    block_sector_t direct[64];
+    block_sector_t double_inderect;
+    uint32_t unused[59];               /* Not used. */
   };
 
 /* Returns the number of sectors to allocate for an inode SIZE
@@ -88,6 +91,49 @@ inode_create (block_sector_t sector, off_t length)
       size_t sectors = bytes_to_sectors (length);
       disk_inode->length = length;
       disk_inode->magic = INODE_MAGIC;
+      disk_inode->is_dir = 0;
+      if (free_map_allocate (sectors, &disk_inode->start)) 
+        {
+          cache_block_write (sector, disk_inode);
+          if (sectors > 0) 
+            {
+              static char zeros[BLOCK_SECTOR_SIZE];
+              size_t i;
+              
+              for (i = 0; i < sectors; i++) 
+                cache_block_write (disk_inode->start + i, zeros);
+            }
+          success = true; 
+        } 
+      free (disk_inode);
+    }
+  return success;
+}
+
+/* Initializes an inode with LENGTH bytes of data and
+   writes the new inode to sector SECTOR on the file system
+   device.
+   Returns true if successful.
+   Returns false if memory or disk allocation fails. */
+bool
+inode_create_dir (block_sector_t sector, off_t length)
+{
+  struct inode_disk *disk_inode = NULL;
+  bool success = false;
+
+  ASSERT (length >= 0);
+
+  /* If this assertion fails, the inode structure is not exactly
+     one sector in size, and you should fix that. */
+  ASSERT (sizeof *disk_inode == BLOCK_SECTOR_SIZE);
+
+  disk_inode = calloc (1, sizeof *disk_inode);
+  if (disk_inode != NULL)
+    {
+      size_t sectors = bytes_to_sectors (length);
+      disk_inode->length = length;
+      disk_inode->magic = INODE_MAGIC;
+      disk_inode->is_dir = 1;
       if (free_map_allocate (sectors, &disk_inode->start)) 
         {
           cache_block_write (sector, disk_inode);
@@ -351,4 +397,22 @@ inode_length (const struct inode *inode)
 int inode_deny_number(struct inode *inode)
 {
   return inode->deny_write_cnt;
+}
+
+bool inode_is_dir(struct inode *inode)
+{
+  ASSERT (inode != NULL);
+  return inode->data.is_dir;
+}
+
+void inode_mark_dir(struct inode *inode)
+{
+  ASSERT (inode != NULL);
+  inode->data.is_dir = 1;
+}
+
+int inode_open_cnt(struct inode *inode)
+{
+  ASSERT (inode != NULL);
+  return inode->open_cnt;
 }

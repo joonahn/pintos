@@ -57,10 +57,13 @@ process_execute (const char *file_name)
   {
     palloc_free_page (fn_copy);
   }
-  else
+  else if(cur->curpath != NULL)
   {
  //   list_push_front(&cur->child_list, &cur->childelem);
     t->parent = cur;
+    free(t->curpath);
+    t->curpath = (char *)malloc(strlen(cur->curpath) + 1);
+    memcpy(t->curpath, cur->curpath, strlen((cur->curpath))+1);
   }
   return tid;
 }
@@ -110,6 +113,9 @@ start_process (void *file_name_)
   // printf("Load Success:%d\n",success);
   // printf("Load Tid:%d\n",cur->tid);
   cur -> loadstat = success;
+  cur -> curpath = (char *)malloc(2);
+  memcpy(cur->curpath, "/", 2);
+  
   strlcpy(cur -> process_name, arg_ptr[0], strlen(arg_ptr[0]) + 1);
   sema_up(&cur->waitsema);
   sema_down(&cur->protectsema);

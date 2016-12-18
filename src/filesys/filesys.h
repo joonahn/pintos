@@ -20,6 +20,9 @@ bool filesys_remove (const char *name);
 // filesys function for absolute path
 bool filesys_abs_create (const char *abs_name, off_t initial_size);
 struct file *filesys_abs_open (const char *abs_name);
+void filesys_change_rel_to_abs(const char *rel_name, const char *abs_cur_path, char ** abs_name);
+void filesys_trim_string(char * str);
 bool filesys_abs_remove (const char *abs_name);
+bool filesys_is_directory(struct file *);
 
 #endif /* filesys/filesys.h */

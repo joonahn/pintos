@@ -112,6 +112,7 @@ struct thread
     struct thread* parent;              /* List of parent process */
     struct list fd_mapping_list;        /* List of fd - fp mapping */
     struct file * exec_file;            /* file pointer of executable */
+    char * curpath;                     /* pointer of current path */
 #endif
 
     /* Owned by thread.c. */
