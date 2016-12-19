@@ -493,7 +493,9 @@ struct dir *dir_open_abs(const char *abs_name, char * filename_buffer, bool * is
     if(abs_name[i] == '/')
     {
       if(i != (length-1) && abs_name[i+1] == '/')
-        return NULL;
+      {
+        i++;
+      }
       depth ++;
     }
   }

@@ -113,6 +113,9 @@ bool filesys_abs_create (const char *abs_name, off_t initial_size)
     return false;
   }
 
+  // printf("name : %s, is_dir %d\n", abs_name, is_dir);
+  // printf("filename : %s, is_dir %d\n", filename, is_dir);
+  // printf("filename length : %d, is_dir %d\n", strlen(filename), is_dir);
   if(is_dir)
   {
     success = (dir != NULL
