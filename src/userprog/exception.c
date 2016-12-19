@@ -142,7 +142,7 @@ page_fault (struct intr_frame *f)
   intr_enable ();
 
 
-  printf("faulted_adr:%p\n",fault_addr);
+  // printf("faulted_adr:%p\n",fault_addr);
 
   /* Count page faults. */
   page_fault_cnt++;

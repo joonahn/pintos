@@ -147,7 +147,7 @@ malloc (size_t size)
 
   /* Get a block from free list and return it. */
   b = list_entry (list_pop_front (&d->free_list), struct block, free_elem);
-  printf("<<<<<allocate on:%p<<<<<\n",b);
+  // printf("<<<<<allocate on:%p<<<<<\n",b);
   a = block_to_arena (b);
   a->free_cnt--;
   lock_release (&d->lock);
@@ -228,7 +228,7 @@ free (void *p)
       if (d != NULL) 
         {
           /* It's a normal block.  We handle it here. */
-          printf(">>>>>free on:%p>>>>>\n",p);
+          // printf(">>>>>free on:%p>>>>>\n",p);
 
 #ifndef NDEBUG
           /* Clear the block to help detect use-after-free bugs. */

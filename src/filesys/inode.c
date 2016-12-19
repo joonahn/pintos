@@ -79,8 +79,8 @@ byte_to_sector (const struct inode *inode, off_t pos)
         block_sector_t pos_sector_double = pos_sector - DIRECT_SECTOR_NUM;
 
         /* Buffer for sector for each level */
-        block_sector_t *level0_data = malloc(BLOCK_SECTOR_SIZE);
-        block_sector_t *level1_data = malloc(BLOCK_SECTOR_SIZE);
+        block_sector_t *level0_data = malloc(BLOCK_SECTOR_SIZE + 1);
+        block_sector_t *level1_data = malloc(BLOCK_SECTOR_SIZE + 2);
 
         /* Indicates where block of each level exists */
         block_sector_t level1_pos;
@@ -122,7 +122,7 @@ inode_init (void)
 
 bool file_growth(block_sector_t sector, off_t length)
 {
-  struct inode_disk *disk_inode = malloc(BLOCK_SECTOR_SIZE);
+  struct inode_disk *disk_inode = malloc(BLOCK_SECTOR_SIZE + 3);
   bool success = false;
   block_read(fs_device, sector, disk_inode);
 
@@ -153,8 +153,8 @@ bool file_growth(block_sector_t sector, off_t length)
       {
         i_double = i - DIRECT_SECTOR_NUM;
         /* Buffer for sector for each level */
-        block_sector_t *level0_data = malloc(BLOCK_SECTOR_SIZE);
-        block_sector_t *level1_data = malloc(BLOCK_SECTOR_SIZE);
+        block_sector_t *level0_data = malloc(BLOCK_SECTOR_SIZE + 4);
+        block_sector_t *level1_data = malloc(BLOCK_SECTOR_SIZE + 5);
 
         /* Indicates where block of each level exists */
         block_sector_t level1_pos;
@@ -370,8 +370,8 @@ inode_close (struct inode *inode)
         else
         {
           i_double = i - 64;
-          block_sector_t *level0_data = malloc(BLOCK_SECTOR_SIZE);
-          block_sector_t *level1_data = malloc(BLOCK_SECTOR_SIZE);
+          block_sector_t *level0_data = malloc(BLOCK_SECTOR_SIZE + 7);
+          block_sector_t *level1_data = malloc(BLOCK_SECTOR_SIZE + 8);
 
           block_sector_t level1_pos;
           block_sector_t level2_pos;
@@ -380,16 +380,10 @@ inode_close (struct inode *inode)
           block_read(fs_device, inode->data.double_indirect, level0_data);
           level1_pos = level0_data[level1_idx];
           block_read(fs_device, level1_pos, level1_data);
+          level2_pos = level1_data[level2_idx];
           free_map_release(level2_pos,1);
-          level1_data[level2_idx] = 0;
-          block_write(fs_device, level1_pos, level1_data);
           if(i_double % 128 == 0)
-          {
-            block_read(fs_device, inode->data.double_indirect, level0_data);
             free_map_release(level1_pos,1);
-            level0_data[level1_idx] = 0;
-            block_write(fs_device, inode->data.double_indirect, level0_data);
-          }
           if(i_double == 0)
             free_map_release(inode->data.double_indirect,1);
           free(level0_data);
@@ -450,7 +444,7 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
          into caller's buffer. */
       if (bounce == NULL) 
       {
-        bounce = malloc (BLOCK_SECTOR_SIZE);
+        bounce = malloc (BLOCK_SECTOR_SIZE + 9);
         if (bounce == NULL)
           break;
       }
@@ -502,8 +496,14 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
     {
       file_growth(inode->sector, size - min_left);
       block_read(fs_device, inode->sector, &inode->data);
+
+      inode_left = inode_length (inode) - offset;
+      sector_left = BLOCK_SECTOR_SIZE - sector_ofs;
+      min_left = inode_left < sector_left ? inode_left : sector_left;
+
+
     }
-    int chunk_size = size < BLOCK_SECTOR_SIZE ? size : BLOCK_SECTOR_SIZE;
+    int chunk_size = size < min_left ? size : min_left;
     
     /* Sector to write, starting byte offset within sector. */
     block_sector_t sector_idx = byte_to_sector (inode, offset);
@@ -521,7 +521,7 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
       /* We need a bounce buffer. */
       if (bounce == NULL) 
       {
-        bounce = malloc (BLOCK_SECTOR_SIZE);
+        bounce = malloc (BLOCK_SECTOR_SIZE + 10);
         if (bounce == NULL)
           break;
       }
