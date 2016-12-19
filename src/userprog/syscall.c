@@ -268,6 +268,10 @@ bool create (const char *file, unsigned initial_size)
   if(file[0] == '/')
   {
     //Absolute path
+    if(dir_is_depth_is_too_deep(file))
+    {
+      return false;
+    }
     return filesys_abs_create(file, initial_size);
   }
   else
@@ -276,6 +280,11 @@ bool create (const char *file, unsigned initial_size)
     bool success;
     char * abs_path;
     filesys_change_rel_to_abs(file, cur->curpath, &abs_path);
+
+    if(dir_is_depth_is_too_deep(abs_path))
+    {
+      return false;
+    }
     success = filesys_abs_create(abs_path, initial_size);
     free(abs_path);
     return success;
@@ -522,97 +531,144 @@ bool chdir (const char *dir)
   }
   else
   {
-    //relative path
-    int depth = -1, i, length;
-    struct dir * struct_dir = NULL;
-    struct inode *inode = NULL;
-    char *str, *token, *save_ptr;
 
-    //Open Folders
-    length = strlen(dir);
-    str = malloc(length + 1);
-    memcpy(str, dir, length + 1);
-    struct_dir = dir_open_abs_dir (thread_current()->curpath);
+    //abs path
+    struct dir * struct_dir;
+    struct inode * inode;
+    char filename[NAME_MAX + 1];
+    char * abs_path; 
+    struct thread *cur;
 
+    cur = thread_current();
+    filesys_change_rel_to_abs(dir, cur->curpath, &abs_path);
 
-    for (token = strtok_r (str, "/", &save_ptr); token != NULL;
-         token = strtok_r (NULL, "/", &save_ptr))
-    {
-      //Is next directory exist?
-      if(struct_dir!= NULL &&
-        dir_lookup_dir(struct_dir, token, &inode))
-      {
-        inode_close(inode);
-        dir_close(struct_dir);
-        struct_dir = dir_open(inode);
-      }
-      // Next directory doesn't exist
-      else
-      {
-        inode_close(inode);
-        dir_close(struct_dir);
-        free(str);
-        return false;
-      }
-    }
-
-
-
-    //Now, dir is the destination directory
-
-
+    //Not Root, but absolute path
+    struct_dir = dir_open_abs(abs_path, filename, NULL);
     if(struct_dir == NULL)
+      return false;
+
+    if(dir_lookup_dir(struct_dir, filename, &inode)==false)
     {
-      free(str);
+      inode_close(inode);
+      free(abs_path);
+      dir_close(struct_dir);
       return false;
     }
     else
     {
-      char * tmp;
-      char * curpath;
-      //relative path is validated
-      dir_close(struct_dir);
-      free(str);
-
-      str = malloc(length + 1);
-      memcpy(str, dir, length + 1);
-
-      for (token = strtok_r (str, "/", &save_ptr); token != NULL;
-           token = strtok_r (NULL, "/", &save_ptr))
+      //dir is a valid directory
+      struct thread * cur = thread_current();
+      inode_close(inode);
+      free(cur->curpath);
+      if(abs_path[strlen(dir)-1] == '/')
       {
-        if(strcmp(".", token) == 0)
-          continue;
-
-        if(strcmp("..", token) == 0)
-        {
-          tmp = thread_current()->curpath;
-          if(strcmp(tmp, "/") == 0)
-            continue;
-          for(i = strlen(tmp)-1; i >0; i--)
-          {
-            if(tmp[i-1] == '/')
-            {
-              tmp[i] = 0;
-              break;
-            }
-          }
-          continue;
-        }
-
-        curpath = thread_current()->curpath;
-        tmp = (char *)malloc(strlen(curpath) + strlen(token) + 2);
-        memcpy(tmp, curpath, strlen(curpath));
-        memcpy(tmp + strlen(curpath), token, strlen(token));
-        memcpy(tmp + strlen(curpath) + strlen(token), "/", 2);
-        free(curpath);
-        thread_current()->curpath = tmp;
+        cur->curpath = (char *)malloc(strlen(abs_path) + 1);
+        memcpy(cur->curpath, abs_path, strlen(abs_path) + 1);
       }
-
-      free(str);
+      else
+      {
+        cur->curpath = (char *)malloc(strlen(abs_path) + 2);
+        memcpy(cur->curpath, abs_path, strlen(abs_path));
+        (cur->curpath)[strlen(abs_path)] = '/';
+        (cur->curpath)[strlen(abs_path) + 1] = 0;
+      }
+      dir_close(struct_dir);
+      free(abs_path);
       return true;
     }
-
   }
+  // {
+  //   //relative path
+  //   int depth = -1, i, length;
+  //   struct dir * struct_dir = NULL;
+  //   struct inode *inode = NULL;
+  //   char *str, *token, *save_ptr;
+
+  //   //Open Folders
+  //   length = strlen(dir);
+  //   str = malloc(length + 1);
+  //   memcpy(str, dir, length + 1);
+  //   struct_dir = dir_open_abs_dir (thread_current()->curpath);
+
+
+  //   for (token = strtok_r (str, "/", &save_ptr); token != NULL;
+  //        token = strtok_r (NULL, "/", &save_ptr))
+  //   {
+  //     //Is next directory exist?
+  //     if(struct_dir!= NULL &&
+  //       dir_lookup_dir(struct_dir, token, &inode))
+  //     {
+  //       inode_close(inode);
+  //       dir_close(struct_dir);
+  //       struct_dir = dir_open(inode);
+  //     }
+  //     // Next directory doesn't exist
+  //     else
+  //     {
+  //       inode_close(inode);
+  //       dir_close(struct_dir);
+  //       free(str);
+  //       return false;
+  //     }
+  //   }
+
+
+
+  //   //Now, dir is the destination directory
+
+
+  //   if(struct_dir == NULL)
+  //   {
+  //     free(str);
+  //     return false;
+  //   }
+  //   else
+  //   {
+  //     char * tmp;
+  //     char * curpath;
+  //     //relative path is validated
+  //     dir_close(struct_dir);
+  //     free(str);
+
+  //     str = malloc(length + 1);
+  //     memcpy(str, dir, length + 1);
+
+  //     for (token = strtok_r (str, "/", &save_ptr); token != NULL;
+  //          token = strtok_r (NULL, "/", &save_ptr))
+  //     {
+  //       if(strcmp(".", token) == 0)
+  //         continue;
+
+  //       if(strcmp("..", token) == 0)
+  //       {
+  //         tmp = thread_current()->curpath;
+  //         if(strcmp(tmp, "/") == 0)
+  //           continue;
+  //         for(i = strlen(tmp)-1; i >0; i--)
+  //         {
+  //           if(tmp[i-1] == '/')
+  //           {
+  //             tmp[i] = 0;
+  //             break;
+  //           }
+  //         }
+  //         continue;
+  //       }
+
+  //       curpath = thread_current()->curpath;
+  //       tmp = (char *)malloc(strlen(curpath) + strlen(token) + 2);
+  //       memcpy(tmp, curpath, strlen(curpath));
+  //       memcpy(tmp + strlen(curpath), token, strlen(token));
+  //       memcpy(tmp + strlen(curpath) + strlen(token), "/", 2);
+  //       free(curpath);
+  //       thread_current()->curpath = tmp;
+  //     }
+
+  //     free(str);
+  //     return true;
+  //   }
+
+  // }
 }
 
 bool mkdir(const char *dir)

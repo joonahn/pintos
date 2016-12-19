@@ -647,3 +647,33 @@ bool dir_read_dir(struct file *f, char * str)
   }
   return false;
 }
+
+bool dir_is_depth_is_too_deep(const char * str)
+{
+  int depth = -1, i, length;
+  bool _is_dir = false;
+  bool success;
+
+
+
+  //Check path
+  length = strlen(str);
+  if(str[0]!= '/')
+    return NULL;
+
+  //Parse string
+  for (i = 0; i < length; ++i)
+  {
+    if(str[i] == '/')
+    {
+      if(i != (length-1) && str[i+1] == '/')
+      {
+        i++;
+      }
+      depth ++;
+    }
+  }
+  if(depth > 201)
+    return true;
+  return false;
+}

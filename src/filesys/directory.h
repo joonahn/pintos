@@ -36,5 +36,6 @@ bool dir_readdir (struct dir *, char name[NAME_MAX + 1]);
 bool dir_is_empty(struct dir *);
 bool dir_is_same(const char *str1, const char *str2);
 bool dir_read_dir(struct file *f, char * str);
+bool dir_is_depth_is_too_deep(const char * str);
 
 #endif /* filesys/directory.h */
