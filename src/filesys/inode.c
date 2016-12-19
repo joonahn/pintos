@@ -366,7 +366,7 @@ inode_open (block_sector_t sector)
   inode->open_cnt = 1;
   inode->deny_write_cnt = 0;
   inode->removed = false;
-  cache_block_read (inode->sector, &inode->data);
+  cache_block_read(inode->sector, &inode->data);
   return inode;
 }
 
@@ -392,6 +392,7 @@ inode_get_inumber (const struct inode *inode)
   void
 inode_close (struct inode *inode) 
 {
+
   /* Ignore null pointer. */
   if (inode == NULL)
   {
@@ -402,6 +403,7 @@ inode_close (struct inode *inode)
   if (--inode->open_cnt == 0)
   {
     /* Remove from inode list and release lock. */
+    cache_flush();
     list_remove (&inode->elem);
 
     /* Deallocate blocks if removed. */
@@ -482,7 +484,7 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
     if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE)
     {
       /* Read full sector directly into caller's buffer. */
-      cache_block_read (sector_idx, buffer + bytes_read);
+      cache_block_read(sector_idx, buffer + bytes_read);
     }
     else 
     {
@@ -494,7 +496,7 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
         if (bounce == NULL)
           break;
       }
-      cache_block_read (sector_idx, bounce);
+      cache_block_read(sector_idx, bounce);
       memcpy (buffer + bytes_read, bounce + sector_ofs, chunk_size);
     }
 
@@ -560,7 +562,7 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
     {
       /* Write full sector directly to disk. */
       //printf("write at offset 0,sector_idx:%d,inode:%p\n",sector_idx, inode);
-      cache_block_write (sector_idx, buffer + bytes_written);
+      cache_block_write(sector_idx, buffer + bytes_written);
     }
     else 
     {
@@ -577,12 +579,12 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
          we're writing, then we need to read in the sector
          first.  Otherwise we start with a sector of all zeros. */
       if (sector_ofs > 0 || chunk_size < sector_left) 
-        cache_block_read (sector_idx, bounce);
+        cache_block_read(sector_idx, bounce);
       else
         memset (bounce, 0, BLOCK_SECTOR_SIZE);
       memcpy (bounce + sector_ofs, buffer + bytes_written, chunk_size);
       //printf("fs_device: %p, sector_idx:%d, bounce:%p\n",fs_device, sector_idx, bounce);
-      cache_block_write (sector_idx, bounce);
+      cache_block_write(sector_idx, bounce);
     }
 
     /* Advance. */
