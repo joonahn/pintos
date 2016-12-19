@@ -312,6 +312,7 @@ thread_exit (void)
   // printf("thread_remove\n");
   list_remove (&thread_current()->allelem);
   sema_up(&thread_current()->waitsema);
+  free(thread_current()->curpath);
   thread_current ()->status = THREAD_DYING;
   schedule ();
   NOT_REACHED ();

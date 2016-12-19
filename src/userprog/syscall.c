@@ -13,6 +13,7 @@
 #include "filesys/filesys.h"
 #include "filesys/file.h"
 #include "filesys/fdmap.h"
+#include "filesys/directory.h"
 #include "devices/input.h"
 
 
@@ -24,7 +25,7 @@ struct lock *filelock = NULL;
 
 static void syscall_handler (struct intr_frame *);
 
-struct file * get_file(int _fd)
+static struct file * get_file(int _fd)
 {
   struct thread* cur =  thread_current();
   struct list_elem *e;
@@ -142,6 +143,26 @@ syscall_handler (struct intr_frame *f UNUSED)
       f->eax = remove(*((char**) arg1));
       break;
     }
+    case SYS_CHDIR:
+    {
+      f->eax = chdir(*((char **)arg1));
+      break;
+    }
+    case SYS_MKDIR:
+    {
+      f->eax = mkdir(*((char **)arg1));
+      break;
+    }
+    case SYS_ISDIR:
+    {
+      f->eax = isdir(*((int*)arg1));
+      break;
+    }
+    case SYS_INUMBER:
+    {
+      f->eax = inumber(*((int*)arg1));
+      break;
+    }
 
 
     //#of arg : 2
@@ -153,6 +174,11 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_CREATE:
     {
       f->eax = create(*((char**) arg1), *((unsigned *)arg2));
+      break;
+    }
+    case SYS_READDIR:
+    {
+      f->eax = readdir(*((int *) arg1), *((char **)arg2));
       break;
     }
 
@@ -226,6 +252,8 @@ int write (int _fd, const void *buffer, unsigned size)
     f = get_file(_fd);
     //f_node = file_get_inode (f);
     // printf("write, deny_num: %d\n", inode_deny_number(f_node));
+    if(filesys_is_directory(f))
+      return -1;
     return (f!=NULL) ? file_write(f, buffer, size) : -1;
   }
 }
@@ -237,8 +265,24 @@ bool create (const char *file, unsigned initial_size)
   if(file == NULL ||  !get_virtual_addr(file) || !strlen(file))
     exit(-1);
 
+  if(file[0] == '/')
+  {
+    //Absolute path
+    return filesys_abs_create(file, initial_size);
+  }
+  else
+  {
+    //relative path
+    bool success;
+    char * abs_path;
+    filesys_change_rel_to_abs(file, cur->curpath, &abs_path);
+    success = filesys_abs_create(abs_path, initial_size);
+    free(abs_path);
+    return success;
+  }
 
-  return filesys_create(file, initial_size);
+  //not reachable
+  return false;
 }
 
 bool remove (const char *file)
@@ -246,7 +290,31 @@ bool remove (const char *file)
   struct thread *cur = thread_current ();
   if(file == NULL ||  !get_virtual_addr(file) || !strlen(file))
     exit(-1);
-  return filesys_remove(file);
+
+  if(file[0] == '/')
+  {
+    //Absolute path
+    if(dir_is_same(cur->curpath, file))
+      return false;
+    return filesys_abs_remove(file);
+  }
+  else
+  {
+    //relative path
+    bool success;
+    char * abs_path;
+    filesys_change_rel_to_abs(file, cur->curpath, &abs_path);
+
+    if(dir_is_same(cur->curpath, abs_path))
+      return false;
+
+    success = filesys_abs_remove(abs_path);
+    free(abs_path);
+    return success;
+  }
+  //not reached
+  return false;
+  // return filesys_remove(file);
 }
 
 int open (const char *file)
@@ -291,9 +359,30 @@ int open (const char *file)
   struct fdmap * mapping = 
     (struct fdmap *)malloc(sizeof(struct fdmap));
   mapping->fd = _fd;
-  lock_acquire(filelock);
-  mapping->fp = filesys_open(file);
-  lock_release(filelock);
+  //mapping->fp = filesys_open(file);
+
+  if(file[0] == '/')
+  {
+    //Absolute path
+    lock_acquire(filelock);
+    mapping->fp = filesys_abs_open(file);
+    lock_release(filelock);
+
+  }
+  else
+  {
+    //relative path
+    char * abs_path;
+    filesys_change_rel_to_abs(file, cur->curpath, &abs_path);
+    lock_acquire(filelock);
+    // printf("cur_path : %s\n", cur->curpath);
+    // printf("abs_path : %s\n", abs_path);
+    mapping->fp = filesys_abs_open(abs_path);
+    lock_release(filelock);
+    free(abs_path);
+  }
+
+  
   if(!mapping->fp)
   {
     free(mapping);
@@ -379,6 +468,281 @@ void close (int _fd)
   file_close(f);
 }
 
+
+bool chdir (const char *dir)
+{
+  //check relative path or absolute path
+  if(strlen(dir)==0)
+    return true;
+  if(dir[0] == '/')
+  {
+    //abs path
+    struct dir * struct_dir;
+    struct inode * inode;
+    char filename[NAME_MAX + 1];
+
+    //Root
+    if(strcmp(dir, "/")==0)
+    {
+      free(thread_current()->curpath);
+      thread_current()->curpath = (char *)malloc(2);
+      memcpy(thread_current()->curpath, "/", 2);
+      return true;
+    }
+
+    //Not Root, but absolute path
+    struct_dir = dir_open_abs(dir, filename, NULL);
+    if(struct_dir == NULL)
+      return false;
+    if(dir_lookup_dir(struct_dir, filename, &inode)==false)
+    {
+      inode_close(inode);
+      return false;
+    }
+    else
+    {
+      //dir is a valid directory
+      struct thread * cur = thread_current();
+      inode_close(inode);
+      free(cur->curpath);
+      if(dir[strlen(dir)-1] == '/')
+      {
+        cur->curpath = (char *)malloc(strlen(dir) + 1);
+        memcpy(cur->curpath, dir, strlen(dir) + 1);
+      }
+      else
+      {
+        cur->curpath = (char *)malloc(strlen(dir) + 2);
+        memcpy(cur->curpath, dir, strlen(dir));
+        (cur->curpath)[strlen(dir)] = '/';
+        (cur->curpath)[strlen(dir) + 1] = 0;
+      }
+      return true;
+    }
+  }
+  else
+  {
+    //relative path
+    int depth = -1, i, length;
+    struct dir * struct_dir = NULL;
+    struct inode *inode = NULL;
+    char *str, *token, *save_ptr;
+
+    //Open Folders
+    length = strlen(dir);
+    str = malloc(length + 1);
+    memcpy(str, dir, length + 1);
+    struct_dir = dir_open_abs_dir (thread_current()->curpath);
+
+
+    for (token = strtok_r (str, "/", &save_ptr); token != NULL;
+         token = strtok_r (NULL, "/", &save_ptr))
+    {
+      //Is next directory exist?
+      if(struct_dir!= NULL &&
+        dir_lookup_dir(struct_dir, token, &inode))
+      {
+        inode_close(inode);
+        dir_close(struct_dir);
+        struct_dir = dir_open(inode);
+      }
+      // Next directory doesn't exist
+      else
+      {
+        inode_close(inode);
+        dir_close(struct_dir);
+        free(str);
+        return false;
+      }
+    }
+
+
+
+    //Now, dir is the destination directory
+
+
+    if(struct_dir == NULL)
+    {
+      free(str);
+      return false;
+    }
+    else
+    {
+      char * tmp;
+      char * curpath;
+      //relative path is validated
+      dir_close(struct_dir);
+      free(str);
+
+      str = malloc(length + 1);
+      memcpy(str, dir, length + 1);
+
+      for (token = strtok_r (str, "/", &save_ptr); token != NULL;
+           token = strtok_r (NULL, "/", &save_ptr))
+      {
+        if(strcmp(".", token) == 0)
+          continue;
+
+        if(strcmp("..", token) == 0)
+        {
+          tmp = thread_current()->curpath;
+          if(strcmp(tmp, "/") == 0)
+            continue;
+          for(i = strlen(tmp)-1; i >0; i--)
+          {
+            if(tmp[i-1] == '/')
+            {
+              tmp[i] = 0;
+              break;
+            }
+          }
+          continue;
+        }
+
+        curpath = thread_current()->curpath;
+        tmp = (char *)malloc(strlen(curpath) + strlen(token) + 2);
+        memcpy(tmp, curpath, strlen(curpath));
+        memcpy(tmp + strlen(curpath), token, strlen(token));
+        memcpy(tmp + strlen(curpath) + strlen(token), "/", 2);
+        free(curpath);
+        thread_current()->curpath = tmp;
+      }
+
+      free(str);
+      return true;
+    }
+
+  }
+}
+
+bool mkdir(const char *dir)
+{
+  //check relative path or absolute path
+  if(strlen(dir)==0)
+    return false;
+  if(dir[0] == '/')
+  {
+    //abs path
+    struct dir * struct_dir;
+    struct inode * inode;
+    char filename[NAME_MAX + 1];
+    struct_dir = dir_open_abs(dir, filename, NULL);
+    if(struct_dir == NULL)
+      return false;
+    if(dir_lookup_dir(struct_dir, filename, &inode))
+    {
+      inode_close(inode);
+      dir_close(struct_dir);
+      return false;
+    }
+    else
+    {
+      bool success;
+      inode_close(inode);
+      success = (dir_add_dir_with_allocate(struct_dir, filename));
+
+      dir_close(struct_dir);
+      return success;
+    }
+  }
+
+
+  else
+  {
+    //relative path
+    int depth = -1, i, length;
+    struct dir * struct_dir = NULL;
+    struct inode *inode = NULL;
+    char *str, *token, *save_ptr;
+
+    //Open Folders
+    length = strlen(dir);
+    str = malloc(length + 1);
+    memcpy(str, dir, length + 1);
+
+
+    //Calculate depth
+    for (token = strtok_r (str, "/", &save_ptr); token != NULL;
+         token = strtok_r (NULL, "/", &save_ptr))
+    {
+      depth ++;
+    }
+
+    free(str);
+    str = malloc(length + 1);
+    memcpy(str, dir, length + 1);
+    struct_dir = dir_open_abs_dir (thread_current()->curpath);
+
+    for ((token = strtok_r (str, "/", &save_ptr)), i = 0; i < depth;
+         (token = strtok_r (NULL, "/", &save_ptr)), i++)
+    {
+      //Is next directory exist?
+      if(struct_dir!= NULL &&
+        dir_lookup_dir(struct_dir, token, &inode))
+      {
+        dir_close(struct_dir);
+        struct_dir = dir_open(inode);
+      }
+      // Next directory doesn't exist
+      else
+      {
+        dir_close(struct_dir);
+        inode_close(inode);
+        free(str);
+        return false;
+      }
+    }
+
+
+
+    //Now, dir is the destination directory
+    if(struct_dir == NULL)
+    {
+      free(str);
+      return false;
+    }
+    else
+    {
+      bool success;
+      success = (dir_add_dir_with_allocate(struct_dir, token));
+      free(str);
+
+      dir_close(struct_dir);
+      return success;
+    }
+
+  }
+}
+
+//Check whether file is directory or not
+bool isdir (int fd)
+{
+  struct file * f;
+  f = get_file(fd);
+  return (f != NULL) ? filesys_is_directory(f) : false;
+}
+
+//Get sector number of file
+int inumber (int fd)
+{
+  struct file * f;
+  f = get_file(fd);
+  return (f != NULL) ? inode_get_inumber(file_get_inode(f)) : false;
+}
+
+//Read Directory entry
+bool readdir (int fd, char name[READDIR_MAX_LEN + 1])
+{
+  struct file * f;
+
+  //Check Validity of fd
+  if(!isdir(fd))
+    return false;
+
+  f = get_file(fd);
+
+  return (f != NULL) ? dir_read_dir(f, name) : false;
+}
 
 int arg_check(int syscall_number,
     uint32_t * arg1, uint32_t * arg2, uint32_t * arg3)

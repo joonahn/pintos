@@ -6,6 +6,7 @@
 #include "filesys/filesys.h"
 #include "filesys/free-map.h"
 #include "threads/malloc.h"
+#include "filesys/cache.h"
 
 /* Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
@@ -23,6 +24,7 @@ struct inode_disk
   block_sector_t double_indirect;
   uint32_t unused[60];               /* Not used. */
 };
+
 
 /* Returns the number of sectors to allocate for an inode SIZE
    bytes long. */
@@ -63,7 +65,7 @@ struct inode* get_inode_by_sector(block_sector_t sector);
    within INODE.
    Returns -1 if INODE does not contain data for a byte at offset
    POS. */
-  static block_sector_t
+static block_sector_t
 byte_to_sector (const struct inode *inode, off_t pos) 
 {
   ASSERT (inode != NULL);
@@ -271,6 +273,64 @@ inode_create (block_sector_t sector, off_t length)
   return success;
 }
 
+/* Initializes an inode with LENGTH bytes of data and
+   writes the new inode to sector SECTOR on the file system
+   device.
+   Returns true if successful.
+   Returns false if memory or disk allocation fails. */
+  bool
+inode_create_dir (block_sector_t sector, off_t length)
+{
+  struct inode_disk *disk_inode = NULL;
+  bool success = false;
+  bool growth =  false;
+
+  ASSERT (length >= 0);
+
+  /* If this assertion fails, the inode structure is not exactly
+     one sector in size, and you should fix that. */
+  ASSERT (sizeof *disk_inode == BLOCK_SECTOR_SIZE);
+
+  disk_inode = calloc (1, sizeof *disk_inode);
+  if (disk_inode != NULL)
+  {
+    disk_inode->length = 0;
+    /* Free map file is not target of file growth*/
+    if(sector == FREE_MAP_SECTOR)
+    {
+      off_t start_sector = 2;
+      disk_inode->length += length;
+      off_t last_sector = start_sector + length / BLOCK_SECTOR_SIZE;
+      size_t i;
+      char* zeros;
+      zeros = calloc(1,BLOCK_SECTOR_SIZE);
+      /* Allocate block for free map file starting with sector number 2 */
+      for(i = start_sector; i< last_sector; i++)
+      {
+        ASSERT(free_map_allocate_explicit_sector(1,&disk_inode->direct[i-2], i));
+        ASSERT(disk_inode->direct[i-2]==i);
+        block_write(fs_device, i, zeros);
+      }
+      free(zeros);
+    }
+    else
+    {
+      //struct inode* inode = get_inode_by_sector(sector);
+      //file_growth(sector, length);
+      growth = true;
+      //block_read(fs_device, inode->sector, &inode->data);
+    }
+    disk_inode->magic = INODE_MAGIC;
+    disk_inode->is_dir = 1;
+    success = true;
+    block_write(fs_device, sector, disk_inode); 
+    if(growth)
+      file_growth(sector, length);
+    free (disk_inode);
+  }
+  return success;
+}
+
 
   struct inode *
 get_inode_by_sector(block_sector_t sector)
@@ -320,7 +380,7 @@ inode_open (block_sector_t sector)
   inode->open_cnt = 1;
   inode->deny_write_cnt = 0;
   inode->removed = false;
-  block_read (fs_device, inode->sector, &inode->data);
+  cache_block_read (inode->sector, &inode->data);
   return inode;
 }
 
@@ -576,9 +636,26 @@ inode_length (const struct inode *inode)
 {
   return inode->data.length;
 }
-
 // Returns deny_write_cnt
 int inode_deny_number(struct inode *inode)
 {
   return inode->deny_write_cnt;
+}
+
+bool inode_is_dir(struct inode *inode)
+{
+  ASSERT (inode != NULL);
+  return inode->data.is_dir;
+}
+
+void inode_mark_dir(struct inode *inode)
+{
+  ASSERT (inode != NULL);
+  inode->data.is_dir = 1;
+}
+
+int inode_open_cnt(struct inode *inode)
+{
+  ASSERT (inode != NULL);
+  return inode->open_cnt;
 }

@@ -9,6 +9,8 @@
 #include "threads/synch.h"
 #include <list.h>
 
+#define READDIR_MAX_LEN 14
+
 typedef int pid_t;
 
 void syscall_init (void);
@@ -28,5 +30,12 @@ int write (int fd, const void *buffer, unsigned length);
 void seek (int fd, unsigned position);
 unsigned tell (int fd);
 void close (int fd);
+
+/* Project 4 only. */
+bool chdir (const char *dir);
+bool mkdir (const char *dir);
+bool readdir (int fd, char name[READDIR_MAX_LEN + 1]);
+bool isdir (int fd);
+int inumber (int fd);
 
 #endif /* userprog/syscall.h */

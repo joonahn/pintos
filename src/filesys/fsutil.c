@@ -219,5 +219,6 @@ fsutil_append (char **argv)
 
   /* Finish up. */
   file_close (src);
+  cache_flush();
   free (buffer);
 }
